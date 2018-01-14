@@ -6,10 +6,9 @@
 #version 120  // YJC: Comment/un-comment this line to resolve compilation errors
                  //      due to different settings of the default GLSL version
 
-in  vec4 color;
-varying out vec4 fColor;
-
+vec4 color = vec4(1,1,1,1);
+//out vec4 fragColor;
 void main()
 {
-    fColor = color;
+    gl_FragColor = vec4(1,1,1,1);
 }

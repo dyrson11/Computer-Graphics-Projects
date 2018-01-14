@@ -20,15 +20,6 @@ static int mx,my;
 static int flag=0;
 static float rotx=0.0f, roty=-70.0f;
 
-GLfloat v[NUMVTX][3]={{-1,0,1},{-1,0,-1},
-                      {0,-1,1},{0,-1,-1},
-                      {1,1,1},{1,1,-1},
-                      {-1,0,1},{-1,0,-1}};
-
-GLfloat c[NUMVTX][3]={{1,0,0},{1,0,0},
-                      {0,1,0},{0,1,0},
-                      {0,0,1},{0,0,1},
-                      {1,0,0},{1,0,0}};
 float terrain[100][100];
 
 vec3 cameraPos = vec3(0.0f, 0.5f, 0.0f);
@@ -109,14 +100,15 @@ void drawgraphix()
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glLineWidth(0.1);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    //cout<<cameraPos.y-50<<endl;
+    //cout<<cameraPos.y-50<<" "<<cameraPos.x-50<<endl;
+
 	for (int y = cameraPos.y*3-50; y < cameraPos.y*3+49; y++)
 	{
 		glBegin(GL_TRIANGLE_STRIP);
-		for (int x = cameraPos.x*3-50; x < cameraPos.x*3+50; x++)
+		for (int x = cameraPos.x-50; x < cameraPos.x+49; x++)
 		{
 			glVertex3f((float)x, (float)y, noise((float)x/3, (float)y/3) / 5.0);
-			glVertex3f((float)x, (float)(y+1), noise((float)x/3, (float)(y+1)/3) / 5.0);
+			glVertex3f((float)(x+1), (float)(y+1), noise((float)(x+1)/3, (float)(y+1)/3) / 5.0);
 		}
 		glEnd();
 	}
@@ -152,6 +144,7 @@ void iddle()
     float currentFrame = glutGet(GLUT_ELAPSED_TIME);
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+    glutPostRedisplay();
 }
 
 void mousefunc(int button,int state,int x,int y)
@@ -205,6 +198,7 @@ void motionfunc(int x,int y)
     if (pitch < -89.0f)
         pitch = -89.0f;
 
+
     vec3 front;
     front.x = cos(DegreesToRadians*yaw) * cos(DegreesToRadians*pitch);
     front.y = sin(DegreesToRadians*pitch);
@@ -219,17 +213,17 @@ void keyboardfunc(unsigned char key,int x,int y)
     switch (key)
     {
         case 'w': case 'W':
-            cameraPos += 0.1 * cameraFront;
+            cameraPos += 0.2 * cameraFront;
             break;
         case 'a': case 'A':
-            cameraPos -= normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+            cameraPos -= normalize(cross(cameraFront, cameraUp)) * 0.2;
             break;
         case 's': case 'S':
-            cameraPos -= 0.1 * cameraFront;
+            cameraPos -= 0.2 * cameraFront;
             break;
 	glColor3f(1.0f, 1.0f, 1.0f);
         case 'd': case 'D':
-            cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+            cameraPos += normalize(cross(cameraFront, cameraUp)) * 0.2;
             break;
     }
     //std::cout<<cameraPos<<std::endl;
