@@ -45,7 +45,7 @@ void genTerrain()
             terrain.push_back((float)y); //noise((float)x/3, (float)y/3) / 5.0
             terrain.push_back((float)(x+1));
             terrain.push_back((float)(y+1)); //noise((float)(x+1)/3, (float)(y+1)/3) / 5.0*/
-		}
+		}sss
 	}
 }
 void init (void)
