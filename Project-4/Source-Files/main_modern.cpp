@@ -35,79 +35,81 @@ void reshapefunc(int width,int height)
 void genTerrain()
 {
 	terrain.clear();
-    for (int y = cameraPos.y*3-50; y < cameraPos.y*3+49; y++)
+    for (int y = cameraPos.z-20; y < cameraPos.z+20; y++)
 	{
-		for (int x = cameraPos.x-50; x < cameraPos.x+49; x++)
+		for (int x = cameraPos.x-20; x < cameraPos.x+20; x++)
 		{
-			terrain.push_back(vec2((float)x/50, (float)y/50));
-			terrain.push_back(vec2((float)(x+1)/50, (float)(y+1)/50));
+			terrain.push_back((float)x);
+			terrain.push_back((float)y);
+			//terrain.push_back(vec2((float)(x+1), (float)(y+1)));
 			/*terrain.push_back((float)x);
             terrain.push_back((float)y); //noise((float)x/3, (float)y/3) / 5.0
             terrain.push_back((float)(x+1));
             terrain.push_back((float)(y+1)); //noise((float)(x+1)/3, (float)(y+1)/3) / 5.0*/
-		}sssss
+		}
 	}
 }
+
+void genIndices()
+{
+	indices.clear();
+	for(int i = 0; i < 39; i++)
+	{
+		if(i % 2 == 0)
+		{
+			for(int j = 0; j < 40; j++)
+			{
+				indices.push_back(i * 40 + j);
+				indices.push_back((i+1) * 40 + j);
+			}
+		}
+		else
+		{
+			for(int j = 39; j > 0; j--)
+			{
+				indices.push_back((i + 1) * 40 + j);
+				indices.push_back(i * 40 + j - 1);
+			}
+		}
+	}
+}
+
+
 void init (void)
 {
 	glClearColor (0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	program = LoadShaders("../Shaders/color_vShader.glsl", "../Shaders/color_fShader.glsl");
-	glUseProgram(program);
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    //glGenBuffers(1, &EBO);
-    //glGenBuffers(1, &VBN);
-
-    glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain.size(), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0,
-                    sizeof(vec2) * terrain.size(), terrain.data());
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
-    glBindVertexArray(0);
-
-    /*glBindBuffer(GL_ARRAY_BUFFER, VBN);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * normals.size(), normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
-    glEnableVertexAttribArray(2);
-
-    cout<<normals.size();
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
-
-
+	genTerrain();
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+/*
     glUniform3f(glGetUniformLocation(program, "objectColor"), 0.5f, 0.3f, 1.0f);
     glUniform3f(glGetUniformLocation(program, "lightColor"), 1.0f, 1.0f, 1.0f);
     glUniform3f(glGetUniformLocation(program, "lightPos"), 4.0f, 4.0f, 6.0f);
     glUniform3f(glGetUniformLocation(program, "viewPos"), -2.0f, -2.0f, -3.0f);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);*/
-
+*/
+  	//glBindVertexArray(0);
+	program = LoadShaders("../Shaders/color_vShader.glsl", "../Shaders/color_fShader.glsl");
+	glUseProgram(program);
 }
 
 void display (void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(program);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	genTerrain();
-	glUseProgram(program);
-    glBindVertexArray(VAO);
+	genIndices();
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * terrain.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2) * terrain.size(), terrain.data());
 	GLuint vPosition = glGetAttribLocation(program, "vPosition");
     glEnableVertexAttribArray(vPosition);
-	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat),
-			  BUFFER_OFFSET(0) );
-
-    glDrawArrays( GL_TRIANGLE_STRIP, 0, terrain.size()/2);
-
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	//cout<<cameraPos<<endl;
+    glDrawElements( GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
 	glDisableVertexAttribArray(vPosition);
     glutSwapBuffers();
-	cout<<terrain[0]<<endl;
 }
 
 void mousefunc(int button,int state,int x,int y)
@@ -190,8 +192,8 @@ int main (int argc,char** argv)
     {
         return -1;
     }
+	init();
 
-    init();
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboardfunc);
     glutReshapeFunc(reshapefunc);
