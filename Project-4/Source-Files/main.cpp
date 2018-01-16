@@ -35,12 +35,6 @@ float lastY =  600.0 / 2.0;
 
 
 
-inline double findnoise(int x)
-{
-	x = (x<<13) ^ x;
-	return (double)( 1.0 - ( (x * (x * x * 15731 + 789221) + 1376312589)) / 1073741824.0);
-}
-
 inline double findnoise2(double x,double y)
 {
 	int n=(int)x+(int)y*57;
@@ -160,19 +154,6 @@ void mousefunc(int button,int state,int x,int y)
 
 void motionfunc(int x,int y)
 {
-	/*if (flag>0) {
-		if (flag>1) {
-			rotx+=360.0f*(x-mx)/winwidth;
-			roty+=360.0f*(y-my)/winheight;
-		}
-
-		mx=x;
-		my=y;
-
-		//drawgraphix();
-
-		flag=2;
-	}*/
     if (firstMouse)
     {
         lastX = x;
