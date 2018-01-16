@@ -3,7 +3,8 @@ static int mx,my;
 static int flag=0;
 static float rotx=0.0f, roty=-70.0f;
 
-vector<vec2> terrain;
+vector<float> terrain;
+vector<int> indices;
 
 vec3 cameraPos = vec3(0.0f, 0.5f, 0.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
