@@ -35,43 +35,52 @@ void reshapefunc(int width,int height)
 void genTerrain()
 {
 	terrain.clear();
-    for (int y = cameraPos.z-20; y < cameraPos.z+20; y++)
+	for(int r = cameraPos.x-25; r < cameraPos.x+25; r++)
 	{
-		for (int x = cameraPos.x-20; x < cameraPos.x+20; x++)
+
+        for(int c = cameraPos.z-25; c < cameraPos.z+25; c++)
 		{
-			terrain.push_back((float)x);
-			terrain.push_back((float)y);
-			//terrain.push_back(vec2((float)(x+1), (float)(y+1)));
-			/*terrain.push_back((float)x);
-            terrain.push_back((float)y); //noise((float)x/3, (float)y/3) / 5.0
-            terrain.push_back((float)(x+1));
-            terrain.push_back((float)(y+1)); //noise((float)(x+1)/3, (float)(y+1)/3) / 5.0*/
-		}
-	}
+			terrain.push_back((float)r);
+			terrain.push_back((float)c);
+        }
+    }
+
 }
 
 void genIndices()
 {
 	indices.clear();
-	for(int i = 0; i < 39; i++)
+	int rows = 50;
+	int columns = 50;
+    for (int r = 0; r < rows - 1; r++)
 	{
-		if(i % 2 == 0)
+        for(int c = 0; c <= columns; c++)
 		{
-			for(int j = 0; j < 40; j++)
+            if(r % 2 == 0)
 			{
-				indices.push_back(i * 40 + j);
-				indices.push_back((i+1) * 40 + j);
-			}
-		}
-		else
-		{
-			for(int j = 39; j > 0; j--)
+                if(c == columns){
+                    indices.push_back((c-1) + (r+1)*columns);
+                    indices.push_back((c-1) + (r+1)*columns);
+                }else{
+                    indices.push_back(c + r * columns);
+                    indices.push_back(c + (r+1) * columns);
+                }
+            }
+			else
 			{
-				indices.push_back((i + 1) * 40 + j);
-				indices.push_back(i * 40 + j - 1);
-			}
-		}
-	}
+                if(c == columns)
+				{
+                    indices.push_back((columns) - c + (r +1) * columns);
+                    indices.push_back((columns) - c + (r +1) * columns);
+                }else{
+                    indices.push_back((columns - 1) - c + (r + 1) * columns);
+                    indices.push_back(r*columns + (columns-1) - c);
+                }
+            }
+
+        }
+    }
+
 }
 
 
