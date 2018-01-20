@@ -36,15 +36,15 @@ float findnoise2(float x, float y)
 {
 	int n = int(floor(x)) + int(floor(y)) * 57;
 	n = or(n * 8192, n);
-	int nn = (n*(n*n*60493+19990303)+1376312589);
-	return 1.0 - (float(nn)/1073741824.0);
+	int nn = (n * (n * n * 60493 + 19990303) + 1376312589);
+	return 1.0 - (float(nn) / 1073741824.0);
 }
 
 float interpolate1(float a,float b,float x)
 {
-	float ft=x * 3.1415927;
-	float f=(1.0-cos(ft))* 0.5;
-	return a*(1.0-f)+b*f;
+	float ft = x * 3.1415927;
+	float f = (1.0 - cos(ft)) * 0.5;
+	return a * (1.0 - f) + b * f;
 }
 
 
@@ -64,7 +64,7 @@ float noise(float x,float y)
 
 void main()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, noise(vPosition.x/3, vPosition.y/3) / 5.0, vPosition.y,1.0);
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, noise(abs(vPosition.y/3), abs(vPosition.x/3)) / 3.0, vPosition.y,1.0);
     //gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, -1.0, vPosition.y,1.0);
     //color = vec4(1,1,1,1);
 }
