@@ -35,23 +35,45 @@ void reshapefunc(int width,int height)
 void genTerrain()
 {
 	terrain.clear();
-	for(int r = cameraPos.x-25; r < cameraPos.x+25; r++)
+	texCoord.clear();
+	float textureU = float(100)*0.1f;
+	float textureV = float(100)*0.1f;
+	for(float r = (cameraPos.x)-15; r < (cameraPos.x)+15; r+=0.3)
 	{
-
-        for(int c = cameraPos.z-25; c < cameraPos.z+25; c++)
+        for(float c = (cameraPos.z)-15; c < (cameraPos.z)+15; c+=0.3)
 		{
-			terrain.push_back((float)r);
-			terrain.push_back((float)c);
+			float scaleR = float(r)/float(100-1);
+			float scaleC = float(c)/float(100-1);
+			terrain.push_back(r);
+			terrain.push_back(c);
+			texCoord.push_back(vec2(textureU * scaleC, textureV * scaleR));
         }
     }
+}
 
+void genTerrain2()
+{
+	terrain2.clear();
+	for(int r = cameraPos.x-20; r < cameraPos.x+20; r++)
+	{
+        for(int c = cameraPos.z-20; c < cameraPos.z+20; c++)
+		{
+			if(r < cameraPos.x - 10 || r >= cameraPos.x + 10 || c < cameraPos.z - 10 || c >= cameraPos.z + 10)
+			{
+				terrain2.push_back((float)r);
+				terrain2.push_back((float)c);
+			}
+
+        }
+    }
 }
 
 void genIndices()
 {
 	indices.clear();
-	int rows = 50;
-	int columns = 50;
+
+	int rows = sqrt(terrain.size()/2);
+	int columns = rows;
     for (int r = 0; r < rows - 1; r++)
 	{
         for(int c = 0; c <= columns; c++)
@@ -80,7 +102,42 @@ void genIndices()
 
         }
     }
+}
 
+void genIndices2()
+{
+	indices2.clear();
+
+	int rows = sqrt(terrain.size()/2);
+	int columns = rows;
+    for (int r = 0; r < rows - 1; r++)
+	{
+        for(int c = 0; c <= columns; c++)
+		{
+            if(r % 2 == 0)
+			{
+                if(c == columns){
+                    indices2.push_back((c-1) + (r+1)*columns);
+                    indices2.push_back((c-1) + (r+1)*columns);
+                }else{
+                    indices2.push_back(c + r * columns);
+                    indices2.push_back(c + (r+1) * columns);
+                }
+            }
+			else
+			{
+                if(c == columns)
+				{
+                    indices2.push_back((columns) - c + (r +1) * columns);
+                    indices2.push_back((columns) - c + (r +1) * columns);
+                }else{
+                    indices2.push_back((columns - 1) - c + (r + 1) * columns);
+                    indices2.push_back(r*columns + (columns-1) - c);
+                }
+            }
+
+        }
+    }
 }
 
 
@@ -110,15 +167,37 @@ void display (void)
 	genTerrain();
 	genIndices();
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * terrain.size(), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2) * terrain.size(), terrain.data());
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain.size() + sizeof(vec2) * texCoord.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain.size(), terrain.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain.size(), sizeof(vec2) * texCoord.size(), texCoord.data());
+
+	GLuint vPosition = glGetAttribLocation(program, "vPosition");
+	glEnableVertexAttribArray(vPosition);
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+
+	GLuint vTexCoord = glGetAttribLocation(program, "vTexCoord");
+	glEnableVertexAttribArray(vTexCoord);
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain.size()));
+
+
+	//cout<<cameraPos<<endl;
+    glDrawElements( GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
+
+	glDisableVertexAttribArray(vPosition);
+	glDisableVertexAttribArray(vTexCoord);
+	glutSwapBuffers();
+	/*genTerrain2();
+	genIndices2();
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * terrain2.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2) * terrain2.size(), terrain2.data());
 	GLuint vPosition = glGetAttribLocation(program, "vPosition");
     glEnableVertexAttribArray(vPosition);
 	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
 	//cout<<cameraPos<<endl;
-    glDrawElements( GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
+    glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
 	glDisableVertexAttribArray(vPosition);
-    glutSwapBuffers();
+    */
 }
 
 void mousefunc(int button,int state,int x,int y)
