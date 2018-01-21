@@ -3,6 +3,7 @@
 
 
 attribute vec2 vPosition;
+attribute vec2 vTexCoord;
 //varying vec3 vColor;
 //varying out vec4 color;
 uniform mat4 model;
@@ -64,7 +65,12 @@ float noise(float x,float y)
 
 void main()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, noise(abs(vPosition.y/3), abs(vPosition.x/3)) / 3.0, vPosition.y,1.0);
+    vec4 vTexColor = vec4(0.0, 0.0, 0.0, 0.0);
+    float height = noise(abs(vPosition.y/3), abs(vPosition.x/3)) / 2.0;
+    if(height > 0.0 && height < 0.3)
+        vTexColor = texture2D(gSampler[0], vTexCoord)
+
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, height, vPosition.y, 1.0);
     //gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, -1.0, vPosition.y,1.0);
     //color = vec4(1,1,1,1);
 }
