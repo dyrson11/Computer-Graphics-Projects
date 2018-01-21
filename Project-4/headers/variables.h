@@ -4,7 +4,11 @@ static int flag=0;
 static float rotx=0.0f, roty=-70.0f;
 
 vector<float> terrain;
+vector<vec2> texCoord;
 vector<int> indices;
+
+vector<float> terrain2;
+vector<int> indices2;
 
 vec3 cameraPos = vec3(0.0f, 0.5f, 0.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
