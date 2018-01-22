@@ -7,12 +7,12 @@
 #include "Angel-yjc.h"
 using namespace Angel;
 using namespace std;
+#define STB_IMAGE_IMPLEMENTATION
 
 #include "../headers/variables.h"
 #include "../headers/perlin_noise.h"
 #include "../headers/shader.h"
-/*#include "headers/genCube.h"
-#include "headers/genLetter.h"*/
+#include "../headers/stb_image.h"
 
 void reshapefunc(int width,int height)
 {
@@ -26,7 +26,7 @@ void reshapefunc(int width,int height)
 
     glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0,(float)width/height,1.0,50.0);
+	gluPerspective(60.0,(float)width/height,1.0,100.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -51,22 +51,25 @@ void genTerrain()
     }
 }
 
-void genTerrain2()
+void genTerrain2(float x0, float y0, float x1, float y1)
 {
 	terrain2.clear();
-	for(int r = cameraPos.x-20; r < cameraPos.x+20; r++)
+	texCoord2.clear();
+	float textureV = (x1 - x0)*0.1f;
+	float textureU = (y1 - y0)*0.1f;
+	for(float r = x0; r < x1; r++)
 	{
-        for(int c = cameraPos.z-20; c < cameraPos.z+20; c++)
+		for(float c = y0; c < y1; c++)
 		{
-			if(r < cameraPos.x - 10 || r >= cameraPos.x + 10 || c < cameraPos.z - 10 || c >= cameraPos.z + 10)
-			{
-				terrain2.push_back((float)r);
-				terrain2.push_back((float)c);
-			}
-
-        }
-    }
+			float scaleR = r/(x1 - x0 - 1);
+			float scaleC = c/(y1 - y0 - 1);
+			terrain2.push_back(r);
+			terrain2.push_back(c);
+			texCoord2.push_back(vec2(textureU * scaleC, textureV * scaleR));
+		}
+	}
 }
+
 
 void genIndices()
 {
@@ -104,12 +107,9 @@ void genIndices()
     }
 }
 
-void genIndices2()
+void genIndices2(int columns, int rows)
 {
 	indices2.clear();
-
-	int rows = sqrt(terrain.size()/2);
-	int columns = rows;
     for (int r = 0; r < rows - 1; r++)
 	{
         for(int c = 0; c <= columns; c++)
@@ -140,6 +140,36 @@ void genIndices2()
     }
 }
 
+void genSkyboxData()
+{
+	vSkyBoxVertices.clear();
+	vSkyBoxTexCoords.clear();
+
+	vSkyBoxVertices =
+	{
+		// Front face
+		vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f), vec3(cameraPos.x+50.0f, -10, cameraPos.z+50.0f), vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z+50.0f),
+		// Back face
+		vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, -10, cameraPos.z-50.0f),
+		// Left face
+		vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z+50.0f), vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z-50.0f),
+		// Right face
+		vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, -10, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f), vec3(cameraPos.x+50.0f, -10, cameraPos.z+50.0f),
+		// Top face
+		vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z-50.0f), vec3(cameraPos.x-50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f), vec3(cameraPos.x+50.0f, cameraPos.y+50.0f, cameraPos.z+50.0f),
+		// Bottom face
+		vec3(cameraPos.x+50.0f, -10, cameraPos.z-50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z-50.0f), vec3(cameraPos.x+50.0f, -10, cameraPos.z+50.0f), vec3(cameraPos.x-50.0f, -10, cameraPos.z+50.0f),
+	};
+
+
+	vec2 vSkyBoxTmp[] =
+	{
+		vec2(0.0f, 1.0f), vec2(0.0f, 0.0f), vec2(1.0f, 1.0f), vec2(1.0f, 0.0f)
+	};
+	for(int i = 0; i < 24; i++)
+		vSkyBoxTexCoords.push_back(vSkyBoxTmp[i%4]);
+
+}
 
 void init (void)
 {
@@ -148,22 +178,198 @@ void init (void)
 	genTerrain();
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-/*
-    glUniform3f(glGetUniformLocation(program, "objectColor"), 0.5f, 0.3f, 1.0f);
-    glUniform3f(glGetUniformLocation(program, "lightColor"), 1.0f, 1.0f, 1.0f);
-    glUniform3f(glGetUniformLocation(program, "lightPos"), 4.0f, 4.0f, 6.0f);
-    glUniform3f(glGetUniformLocation(program, "viewPos"), -2.0f, -2.0f, -3.0f);
-*/
-  	//glBindVertexArray(0);
+
+	stbi_set_flip_vertically_on_load(true);
+
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("../Textures/grass.jpg", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	//cout<<"Af texture image2D\n";
+	stbi_image_free(data);
+
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	data = stbi_load("../Textures/grass2.jpg", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &texture3);
+	glBindTexture(GL_TEXTURE_2D, texture3);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	data = stbi_load("../Textures/grass&rocks.jpg", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &texture4);
+	glBindTexture(GL_TEXTURE_2D, texture4);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	data = stbi_load("../Textures/rocks.jpg", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &texture5);
+	glBindTexture(GL_TEXTURE_2D, texture5);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	data = stbi_load("../Textures/snow.jpg", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureFront);
+	glBindTexture(GL_TEXTURE_2D, textureFront);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_ft.tga", &width, &height, &nrChannels, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureBack);
+	glBindTexture(GL_TEXTURE_2D, textureBack);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_bk.tga", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureLeft);
+	glBindTexture(GL_TEXTURE_2D, textureLeft);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_lf.tga", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureRight);
+	glBindTexture(GL_TEXTURE_2D, textureRight);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_rt.tga", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureUp);
+	glBindTexture(GL_TEXTURE_2D, textureUp);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_up.tga", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenTextures(1, &textureDown);
+	glBindTexture(GL_TEXTURE_2D, textureDown);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	data = stbi_load("../Textures/env/thunder_dn.tga", &width, &height, &nrChannels, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+
+	glGenBuffers(1, &VBO_Skybox);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_Skybox);
+
+	skyProgram = LoadShaders("../Shaders/skybox_vShader.glsl", "../Shaders/skybox_fShader.glsl");
+	glUseProgram(skyProgram);
+	glUniform1i(glGetUniformLocation(skyProgram, "textureBox"), 8);
+
+	glUseProgram(0);
 	program = LoadShaders("../Shaders/color_vShader.glsl", "../Shaders/color_fShader.glsl");
 	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "texture1"), 0);
+	glUniform1i(glGetUniformLocation(program, "texture2"), 1);
+	glUniform1i(glGetUniformLocation(program, "texture3"), 2);
+	glUniform1i(glGetUniformLocation(program, "texture4"), 3);
+	glUniform1i(glGetUniformLocation(program, "texture5"), 4);
 }
 
 void display (void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glUseProgram(skyProgram);
+	genSkyboxData();
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_Skybox);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vSkyBoxVertices.size() + sizeof(vec2) * vSkyBoxTexCoords.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec3) * vSkyBoxVertices.size(), vSkyBoxVertices.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec3) * vSkyBoxVertices.size(), sizeof(vec2) * vSkyBoxTexCoords.size(), vSkyBoxTexCoords.data());
+	//cout<<"bind buffers\n";
+
+
+	GLuint vPosition = glGetAttribLocation(skyProgram, "vPosition");
+	glEnableVertexAttribArray(vPosition);
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+
+	GLuint vTexCoord = glGetAttribLocation(skyProgram, "vTexCoord");
+	glEnableVertexAttribArray(vTexCoord);
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vec3) * 24));
+
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureFront);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureBack);
+	glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureLeft);
+	glDrawArrays(GL_TRIANGLE_STRIP, 8, 4);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureRight);
+	glDrawArrays(GL_TRIANGLE_STRIP, 12, 4);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureUp);
+	glDrawArrays(GL_TRIANGLE_STRIP, 16, 4);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, textureDown);
+	glDrawArrays(GL_TRIANGLE_STRIP, 20, 4);
+
 	glUseProgram(program);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	genTerrain();
 	genIndices();
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -171,33 +377,86 @@ void display (void)
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain.size(), terrain.data());
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain.size(), sizeof(vec2) * texCoord.size(), texCoord.data());
 
-	GLuint vPosition = glGetAttribLocation(program, "vPosition");
+	vPosition = glGetAttribLocation(program, "vPosition");
 	glEnableVertexAttribArray(vPosition);
 	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
 
-	GLuint vTexCoord = glGetAttribLocation(program, "vTexCoord");
+	vTexCoord = glGetAttribLocation(program, "vTexCoord");
 	glEnableVertexAttribArray(vTexCoord);
 	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain.size()));
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, texture3);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, texture4);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, texture5);
 
 	//cout<<cameraPos<<endl;
     glDrawElements( GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
 
+	genTerrain2(cameraPos.x - 45, cameraPos.z + 14, cameraPos.x + 45, cameraPos.z + 45);
+	genIndices2(31, 90);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size() + sizeof(vec2) * texCoord2.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain2.size(), terrain2.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size(), sizeof(vec2) * texCoord2.size(), texCoord2.data());
+
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain2.size()));
+
+	glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
+
+	genTerrain2(cameraPos.x - 45, cameraPos.z - 14, cameraPos.x - 14, cameraPos.z + 15);
+	genIndices2(31, 31);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size() + sizeof(vec2) * texCoord2.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain2.size(), terrain2.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size(), sizeof(vec2) * texCoord2.size(), texCoord2.data());
+
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain2.size()));
+
+	glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
+
+	genTerrain2(cameraPos.x - 45, cameraPos.z - 45, cameraPos.x + 45, cameraPos.z - 14);
+	genIndices2(90, 31);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size() + sizeof(vec2) * texCoord2.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain2.size(), terrain2.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size(), sizeof(vec2) * texCoord2.size(), texCoord2.data());
+
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain2.size()));
+
+	glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
+
+	genTerrain2(cameraPos.x + 14, cameraPos.z - 15, cameraPos.x + 45, cameraPos.z + 15);
+	genIndices2(30, 31);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size() + sizeof(vec2) * texCoord2.size(), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * terrain2.size(), terrain2.data());
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * terrain2.size(), sizeof(vec2) * texCoord2.size(), texCoord2.data());
+
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(float) * terrain2.size()));
+
+	glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
+
 	glDisableVertexAttribArray(vPosition);
 	glDisableVertexAttribArray(vTexCoord);
+
+	glUseProgram(0);
+
 	glutSwapBuffers();
-	/*genTerrain2();
-	genIndices2();
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * terrain2.size(), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vec2) * terrain2.size(), terrain2.data());
-	GLuint vPosition = glGetAttribLocation(program, "vPosition");
-    glEnableVertexAttribArray(vPosition);
-	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
-	//cout<<cameraPos<<endl;
-    glDrawElements( GL_TRIANGLE_STRIP, indices2.size(), GL_UNSIGNED_INT, indices2.data());
-	glDisableVertexAttribArray(vPosition);
-    */
 }
 
 void mousefunc(int button,int state,int x,int y)
@@ -218,7 +477,7 @@ void motionfunc(int x,int y)
     lastX = x;
     lastY = y;
 
-    float sensitivity = 0.1f; // change this value to your liking
+    float sensitivity = 0.3f; // change this value to your liking
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
@@ -274,7 +533,7 @@ int main (int argc,char** argv)
     glutInit(&argc,argv);
     glutInitWindowSize(winwidth,winheight);
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB|GLUT_DEPTH);
-	glutCreateWindow("Practica 1 - Ejercicio 1.1");
+	glutCreateWindow("Project 4");
 
     if ( glewInit() != GLEW_OK )
     {
