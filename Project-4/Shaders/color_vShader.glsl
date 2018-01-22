@@ -5,10 +5,13 @@
 attribute vec2 vPosition;
 attribute vec2 vTexCoord;
 //varying vec3 vColor;
-//varying out vec4 color;
+varying vec2 TexCoord;
+varying float height;
+varying vec4 viewSpace;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
 
 const int BIT_COUNT = 8;
 
@@ -65,11 +68,11 @@ float noise(float x,float y)
 
 void main()
 {
-    vec4 vTexColor = vec4(0.0, 0.0, 0.0, 0.0);
-    float height = noise(abs(vPosition.y/3), abs(vPosition.x/3)) / 2.0;
-    if(height > 0.0 && height < 0.3)
-        vTexColor = texture2D(gSampler[0], vTexCoord)
+    //vec4 vTexColor = vec4(0.0, 0.0, 0.0, 0.0);
+    height = noise(abs(vPosition.y/5), abs(vPosition.x/5))/3 * 2;
 
+    TexCoord = vTexCoord;
+    viewSpace = gl_ModelViewMatrix * vec4(vPosition.x, height, vPosition.y, 1.0);
     gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, height, vPosition.y, 1.0);
     //gl_Position = gl_ModelViewProjectionMatrix * vec4(vPosition.x, -1.0, vPosition.y,1.0);
     //color = vec4(1,1,1,1);
