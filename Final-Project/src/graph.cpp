@@ -1,4 +1,4 @@
-#include "../headers/graph.h"
+#include "../include/graph.h"
 
 template<typename N, typename E>
 bool graph<N,E>::insertNode(Node* x)
@@ -40,6 +40,12 @@ bool graph<N,E>::removeEdge(Edge *x, bool dir)//can change with a direction bool
     a->m_edges.erase(a->m_edges.find(x));
     m_edges_list.erase(m_edges_list.find(x));
     return true;
+}
+
+template<typename N, typename E>
+void graph<N,E>::init_graph(model<N,E> mod)
+{
+    
 }
 
 //cGraph<float, float> graph;

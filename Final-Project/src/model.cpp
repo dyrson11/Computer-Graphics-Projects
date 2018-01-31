@@ -1,4 +1,4 @@
-#include "../headers/model.h"
+#include "../include/model.h"
 
 const vector<string> explode(const string& s, const char& c)
 {
@@ -15,52 +15,72 @@ const vector<string> explode(const string& s, const char& c)
 	return v;
 }
 
-template<typename N, typename E>
-void model<N,E>::clear_model()
+template<typename V, typename L>
+void model<V,L>::clear_model()
 {
     vertices.clear();
     lines.clear();
+	indices.clear();
 }
 
-template<typename N, typename E>
-void model<N,E>::read_model(string dir)
+template<typename V, typename L>
+void model<V,L>::load_model(const char * dir)
 {
     clear_model();
-    freopen(dir.c_str(), "r", stdin);
-    string line;
-    vector <string> args;
-    float x, y, z;
-    int a, b, c
-    while(getline(cin, line))
-    {
-        args = explode(line, ' ');
-        if(args[0] == 'v')
-        {
-            sscanf(line, "%*s %f %f %f", x, y, z);
-            Vertex *vert = new Vertex(x, y, z);
-
-        }
-        else if(args.size() == 4)
-        {
-            sscanf(line, "%*s %a %b %c", a, b, c);
-            indices.push_back(index);
-        }
-    }
+    if(freopen(dir, "r", stdin))
+	{
+		string ln;
+		vector <string> args;
+		float x, y, z;
+		int a, b, c, d;
+		while(getline(cin, ln))
+		{
+			args = explode(ln, ' ');
+			if(args[0] == "v")
+			{
+				sscanf(ln.c_str(), "%*s %f %f %f", &x, &y, &z);
+				Vertex *vert = new Vertex(x, y, z);
+				insertVertex(vert);
+			}
+			else if(args.size() == 4 && args[0] == "f")
+			{
+				sscanf(ln.c_str(), "%*s %d %d %d", &a, &b, &c);
+				insertLine(a, b);
+				insertLine(b, c);
+				insertLine(c, a);
+			}
+			else if(args.size() == 5 && args[0] == "f")
+			{
+				sscanf(ln.c_str(), "%*s %d %d %d %d", &a, &b, &c, &d);
+				insertLine(a, b);
+				insertLine(b, c);
+				insertLine(c, d);
+				insertLine(d, a);
+			}
+		}
+	}
 }
 
-template<typename N, typename E>
-bool graph<N,E>::insertVertex(Node* x)
+template<typename V, typename L>
+bool model<V,L>::insertVertex(Vertex* x)
 {
-    m_nodes_list.push_back(x);
+    vertices.push_back(x);
+	positions.push_back(x->pos);
 }
 
-template<typename N, typename E>
-bool graph<N,E>::insertLine(Node *a, Node *b)
+template<typename V, typename L>
+bool model<V,L>::insertLine(int i, int j)
 {
-    Edge *edge1 = new Edge;
-    edge1->m_nodes[0] = a;
-    edge1->m_nodes[1] = b;
-    a->m_edges.push_back(edge1);
-    b->m_edges.push_back(edge1);
-    m_edges_list.push_back(edge1);
+    Line *line1 = new Line;
+	Vertex *a = vertices[i-1];
+	Vertex *b = vertices[j-1];
+    line1->vertices[0] = a;
+    line1->vertices[1] = b;
+    a->lines.push_back(line1);
+    b->lines.push_back(line1);
+    lines.push_back(line1);
+	indices.push_back(i-1);
+	indices.push_back(j-1);
 }
+
+template class model<float, float>;

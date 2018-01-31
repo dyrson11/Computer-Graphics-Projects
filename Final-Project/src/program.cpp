@@ -1,6 +1,6 @@
-#include "../headers/program.h"
+#include "../include/program.h"
 
-void loadShaders(const char * vertex_file_path, const char * fragment_file_path)
+void program::loadShaders(const char * vertex_file_path, const char * fragment_file_path)
 {
 
 	// Create the shaders
@@ -18,7 +18,7 @@ void loadShaders(const char * vertex_file_path, const char * fragment_file_path)
 	}else{
 		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
 		getchar();
-		return 0;
+		return;
 	}
 
 	// Read the Fragment Shader code from the file
