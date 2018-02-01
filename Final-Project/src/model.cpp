@@ -1,19 +1,5 @@
 #include "../include/model.h"
-
-const vector<string> explode(const string& s, const char& c)
-{
-	string buff{""};
-	vector<string> v;
-
-	for(auto n:s)
-	{
-		if(n != c) buff+=n; else
-		if(n == c && buff != "") { v.push_back(buff); buff = ""; }
-	}
-	if(buff != "") v.push_back(buff);
-
-	return v;
-}
+#include "../include/utils.h"
 
 template<typename V, typename L>
 void model<V,L>::clear_model()
@@ -33,6 +19,7 @@ void model<V,L>::load_model(const char * dir)
 		vector <string> args;
 		float x, y, z;
 		int a, b, c, d;
+		Line *line1, *line2, *line3, *line4;
 		while(getline(cin, ln))
 		{
 			args = explode(ln, ' ');
@@ -45,19 +32,51 @@ void model<V,L>::load_model(const char * dir)
 			else if(args.size() == 4 && args[0] == "f")
 			{
 				sscanf(ln.c_str(), "%*s %d %d %d", &a, &b, &c);
-				insertLine(a, b);
-				insertLine(b, c);
-				insertLine(c, a);
+				insertLine(a, b, line1);
+				insertLine(b, c, line1);
+				insertLine(c, a, line1);
+				vec3 normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[b - 1]->pos) - glm::vec3(vertices[a - 1]->pos),
+		        glm::vec3(vertices[c - 1]->pos) - glm::vec3(vertices[a - 1]->pos)));
+
+				vertices[a - 1]->normal += normal; vertices[a - 1]->num_faces++;
+				vertices[b - 1]->normal += normal; vertices[b - 1]->num_faces++;
+				vertices[c - 1]->normal += normal; vertices[c - 1]->num_faces++;
+
 			}
 			else if(args.size() == 5 && args[0] == "f")
 			{
 				sscanf(ln.c_str(), "%*s %d %d %d %d", &a, &b, &c, &d);
-				insertLine(a, b);
-				insertLine(b, c);
-				insertLine(c, d);
-				insertLine(d, a);
+
+				insertLine(a, b, line1);
+				insertLine(b, c, line2);
+				insertLine(c, d, line3);
+				insertLine(d, a, line4);
+				vec3 normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[b - 1]->pos) - glm::vec3(vertices[a - 1]->pos),
+		        glm::vec3(vertices[c - 1]->pos) - glm::vec3(vertices[b - 1]->pos)));
+
+				vertices[a - 1]->normal += normal; vertices[a - 1]->num_faces++;
+				vertices[b - 1]->normal += normal; vertices[b - 1]->num_faces++;
+				vertices[c - 1]->normal += normal; vertices[c - 1]->num_faces++;
+				vertices[d - 1]->normal += normal; vertices[d - 1]->num_faces++;
+
+				line1->connections.push_back(line3);
+				line2->connections.push_back(line4);
 			}
 		}
+	}
+	computeNormals();
+}
+
+template<typename V, typename L>
+void model<V,L>::computeNormals()
+{
+    for(int i = 0; i < vertices.size(); i++)
+	{
+		vertices[i]->normal.x = vertices[i]->normal.x / vertices[i]->num_faces;
+		vertices[i]->normal.y = vertices[i]->normal.y / vertices[i]->num_faces;
+		vertices[i]->normal.z = vertices[i]->normal.z / vertices[i]->num_faces;
 	}
 }
 
@@ -69,9 +88,9 @@ bool model<V,L>::insertVertex(Vertex* x)
 }
 
 template<typename V, typename L>
-bool model<V,L>::insertLine(int i, int j)
+void model<V,L>::insertLine(int i, int j, Line *&line1)
 {
-    Line *line1 = new Line;
+    line1 = new Line;
 	Vertex *a = vertices[i-1];
 	Vertex *b = vertices[j-1];
     line1->vertices[0] = a;

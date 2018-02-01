@@ -26,7 +26,8 @@ public:
 
     void clear_model();
     void load_model(const char *);
+    void computeNormals();
 
     bool insertVertex(Vertex*);
-    bool insertLine(int, int);
+    void insertLine(int, int, Line*&);
 };
