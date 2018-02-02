@@ -48,15 +48,21 @@ void graph<N,E>::init_graph(model<N,E> mod)
 {
     for(int i = 0; i < mod.lines.size(); i++)
     {
-        for(int j = 0; j < mod.lines[i]->vertices[0]; j++)
+        node* newNode = new node(mod.lines[i]->vertices[0]->pos, mod.lines[i]->vertices[1]->pos);
+        for(int j = 0; j < mod.lines[i]->vertices[0]->lines.size(); j++)
         {
+            if(mod.lines[i]->vertices[0]->lines[i] != mod->lines[i])
+            {
+
+            }
 
         }
-        for(int j = 0; j < mod.lines[i]->vertices[1]; j++)
+        for(int j = 0; j < mod.lines[i]->vertices[1]->lines.size(); j++)
         {
 
         }
     }
 }
+
 
 //cGraph<float, float> graph;

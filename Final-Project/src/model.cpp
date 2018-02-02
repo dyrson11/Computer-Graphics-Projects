@@ -7,6 +7,9 @@ void model<V,L>::clear_model()
     vertices.clear();
     lines.clear();
 	indices.clear();
+
+    quads.clear();
+    tris.clear();
 }
 
 template<typename V, typename L>
@@ -43,6 +46,8 @@ void model<V,L>::load_model(const char * dir)
 				vertices[b - 1]->normal += normal; vertices[b - 1]->num_faces++;
 				vertices[c - 1]->normal += normal; vertices[c - 1]->num_faces++;
 
+
+                tris.push_back( Tri( a, b, c ) );
 			}
 			else if(args.size() == 5 && args[0] == "f")
 			{
@@ -63,6 +68,8 @@ void model<V,L>::load_model(const char * dir)
 
 				line1->connections.push_back(line3);
 				line2->connections.push_back(line4);
+
+                quads.push_back( Quad( a, b, c, d ) );
 			}
 		}
 	}
@@ -77,6 +84,10 @@ void model<V,L>::computeNormals()
 		vertices[i]->normal.x = vertices[i]->normal.x / vertices[i]->num_faces;
 		vertices[i]->normal.y = vertices[i]->normal.y / vertices[i]->num_faces;
 		vertices[i]->normal.z = vertices[i]->normal.z / vertices[i]->num_faces;
+	}
+    for(int i = 0; i < lines.size(); i++)
+	{
+		lines[i]->index = i;
 	}
 }
 

@@ -4,14 +4,11 @@ class node
 public:
     typedef typename G::n N;
     typedef typename G::Edge Edge;
-    N x, y;
-    int index;
+    vec3 points[2];
     unordered_set <Edge*> m_edges;
-    int state;
-    node(N x, N y)
+    node(vec3 first, vec3 second)
     {
-        this->x = x;
-        this->y = y;
-        state = 0;
+        points[0] = first;
+        points[0] = second;
     }
 };
