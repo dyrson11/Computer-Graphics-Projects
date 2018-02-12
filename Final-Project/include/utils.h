@@ -1,3 +1,5 @@
+#pragma once
+
 #define M_E         2.71828182845904523536028747135266250
 
 float angleBetween(glm::vec3 a, glm::vec3 b, glm::vec3 origin)
@@ -22,19 +24,95 @@ const vector<string> explode(const string& s, const char& c)
 	return v;
 }
 
-float matrix_graph[mod.lines.size()][mod.lines.size()];
-float sigma1 = 5, sigma2 = 15, wn = -5;
 
 
 void _fooInitGraph()
 {
+    float matrix_graph[mod.lines.size()][mod.lines.size()];
+    float sigma1 = 5, sigma2 = 15, wn = -5;
+    unordered_set< pair<int, int> > added_edges;
+    int a, b, c, d;
+    bool swapped;
+    vec3 origin, tEnd1, tEdn2;
+    Node *ab, *bc, *ac;
+    // iterate over tris
+    for ( Tri tTri : mod.tris)
+    {
+        a = tTri.i1;
+        b = tTri.i2;
+        c = tTri.i3;
+        if( nodes.find( make_pair( min(a, b), max(a, b) ) ) == added_edges.end() )
+        {
+            if(a > b)
+            {
+                swap(a, b);
+                swapped = true;
+            }
+            ab = new Node(a, b, mod.vertices[a]->pos, mod.vertices[b]->pos);
+            nodes.insert( make_pair( make_pair(a, b), ab ) );
+            if(swapped)
+            {
+                swap(a, b);
+                swapped = false;
+            }
+        }
+        else
+        {
+            ab = nodes[make_pair( min(a, b), max(a, b) )];
+        }
 
-    //
+        if( nodes.find( make_pair( min(b, c), max(b, c) ) ) == added_edges.end() )
+        {
+            if(b > c)
+            {
+                swap(b, c);
+                swapped = true;
+            }
+            bc = new Node(b, c, mod.vertices[b]->pos, mod.vertices[c]->pos);
+            nodes.insert( make_pair( make_pair(b, c) ), bc );
+            if(swapped)
+            {
+                swap(b, c);
+                swapped = false;
+            }
+        }
+        else
+        {
+            bc = nodes[make_pair( min(b, c), max(b, c) )];
+        }
 
-    // iterate over quads
+        if( nodes.find( make_pair( min(b, c), max(b, c) ) ) == added_edges.end() )
+        {
+            if(a > c)
+            {
+                swap(b, c);
+                swapped = true;
+            }
+            ac = new Node(a, c, mod.vertices[a]->pos, mod.vertices[c]->pos);
+            nodes.insert( make_pair( make_pair(a, c) ), ac );
+            if(swapped)
+            {
+                swap(a, c);
+                swapped = false;
+            }
+        }
+        else
+        {
+            ac = nodes[make_pair( min(a, c), max(a, c) )];
+        }
+
+        //compute ab node and neighbor ac
+        origin = mod.vertices[a]->pos;
+        tEnd1 = mod.vertices[b]->pos;
+        tEnd1 = mod.vertices[c]->pos;
+        weight =
+
+    }
 
     for ( Quad tQuad : obj.quads )
     {
+
+        vec3 origin =
 
     }
 

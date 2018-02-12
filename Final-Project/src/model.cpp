@@ -1,3 +1,4 @@
+#pragma once
 #include "../include/model.h"
 #include "../include/utils.h"
 
@@ -102,8 +103,12 @@ template<typename V, typename L>
 void model<V,L>::insertLine(int i, int j, Line *&line1)
 {
     line1 = new Line;
+    if(i > j)
+        swap(i, j);
 	Vertex *a = vertices[i-1];
 	Vertex *b = vertices[j-1];
+    line1->a = i;
+    line1->b = j;
     line1->vertices[0] = a;
     line1->vertices[1] = b;
     a->lines.push_back(line1);

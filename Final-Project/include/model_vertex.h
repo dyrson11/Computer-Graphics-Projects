@@ -6,6 +6,7 @@ public:
     typedef typename G::Line line;
     vec3 pos;
     int num_faces;
+    bool processed;
     vec3 normal;
     vector <line*> lines;
     vertex(V x, V y, V z)
