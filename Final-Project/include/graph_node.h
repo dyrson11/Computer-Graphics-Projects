@@ -5,10 +5,13 @@ public:
     typedef typename G::n N;
     typedef typename G::Edge Edge;
     vec3 points[2];
+    int i1, i2;
     unordered_set <Edge*> m_edges;
-    node(vec3 first, vec3 second)
+    node(int a, int b, vec3 va, vec3 vb)
     {
-        points[0] = first;
-        points[0] = second;
+        i1 = a;
+        i2 = b;
+        points[0] = va;
+        points[1] = vb;
     }
 };

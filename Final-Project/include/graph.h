@@ -1,5 +1,9 @@
 #include <bits/stdc++.h>
-//using namespace glm;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/norm.hpp>
+using namespace glm;
 using namespace std;
 
 #include "graph_node.h"
@@ -16,13 +20,13 @@ public:
     typedef N n;
     typedef E e;
 
-    unordered_set <Node*> m_nodes_list;
-    unordered_set <Edge*> m_edges_list;
+    unordered_map< pair<int, int>, Node* > nodes;
+    unordered_set<Edge*> edges;
 
     void init_graph(model<N,E> mod);
 
     bool insertNode(Node *x);
-    bool insertEdge(Node *a, Node *b);
+    bool insertEdge(Node *a, Node *b, float weight);
     bool removeEdge(Edge *x, bool dir);
     bool removeNode(Node *x);
 };
