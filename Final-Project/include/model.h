@@ -69,6 +69,9 @@ public:
     vector<vec3> positions;
     vector <GLuint> indices;
 
+    unordered_map< pair<int, int>, Line* > insertedLines;
+    unordered_map< pair<int, int>, Line* >::iterator itLine;
+
     vector<Quad> quads;
     vector<Tri> tris;
 

@@ -102,20 +102,30 @@ bool model<V,L>::insertVertex(Vertex* x)
 template<typename V, typename L>
 void model<V,L>::insertLine(int i, int j, Line *&line1)
 {
-    line1 = new Line;
+    itLine = insertedLines.find( make_pair( i, j ) );
     if(i > j)
         swap(i, j);
-	Vertex *a = vertices[i-1];
-	Vertex *b = vertices[j-1];
-    line1->a = i;
-    line1->b = j;
-    line1->vertices[0] = a;
-    line1->vertices[1] = b;
-    a->lines.push_back(line1);
-    b->lines.push_back(line1);
-    lines.push_back(line1);
-	indices.push_back(i-1);
-	indices.push_back(j-1);
+
+    if( itLine == insertedLines.end() )
+    {
+        line1 = new Line;
+        Vertex *a = vertices[i-1];
+        Vertex *b = vertices[j-1];
+        line1->a = i;
+        line1->b = j;
+        line1->vertices[0] = a;
+        line1->vertices[1] = b;
+        a->lines.push_back(line1);
+        b->lines.push_back(line1);
+        lines.push_back(line1);
+        insertedLines.insert( make_pair( make_pair( i, j ), line1 ) );
+        indices.push_back(i-1);
+        indices.push_back(j-1);
+    }
+    else
+    {
+        line1 = itLine->second;
+    }
 }
 
 template class model<float, float>;

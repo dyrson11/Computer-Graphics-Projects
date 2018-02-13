@@ -47,7 +47,11 @@ bool graph<N,E>::removeEdge(Edge *x, bool dir)//can change with a direction bool
 template<typename N, typename E>
 void graph<N,E>::init_graph(model<N,E> mod)
 {
-    Node* temp;
+    Node* temp, *en, *st;
+    vec3 origin, start, norm, vectorStart, projectionStart, end, vectorEnd, projectionEnd;
+    float dot, det, angle, arg;
+    float sigma1 = 5, sigma2 = 15, sigma3 = 5, wp = 0.05, wn = -5;
+
     for( mod.Line* tLine : mod.lines.size() )
     {
         temp = new Node( tLine->a, tLine->b, tLine->vertices[0]->pos, tLine->vertices[1]->pos );
@@ -56,61 +60,77 @@ void graph<N,E>::init_graph(model<N,E> mod)
 
     for( mod.Line* tLine : mod.lines.size() )
     {
-        vec3 origin = tLine->vertices[0]->pos;
-        vec3 start = tLine->vertices[1]->pos;
-        vec3 norm = tLine->vertices[0]->normal;
-        vec3 vectorStart = start - origin;
-        float sigma1 = 5, sigma2 = 15, wn = -5;
-        Node *st = nodes[make_pair(tLine->a, tLine->b)];
+        st = nodes[make_pair(tLine->a, tLine->b)];
 
-        vec3 projectionStart = vectorStart - dot( vectorStart, norm ) * norm / norm(norm);
+
+        origin = tLine->vertices[0]->pos;
+        start = tLine->vertices[1]->pos;
+        norm = tLine->vertices[0]->normal;
+        vectorStart = start - origin;
+        projectionStart = vectorStart - dot( vectorStart, norm ) * norm / norm(norm);
         for( mod.Line* neighbor : tLine->vertices[0]->lines )
         {
             if( neighbor != tLine )
             {
-                Node *en = nodes[make_pair(neighbor->a, neighbor->b)];
+                en = nodes[make_pair(neighbor->a, neighbor->b)];
 
-                vec3 end = neighbor->vertices[neighbor->vertices[0]->pos == origin];
-                vec3 vectorEnd = end - origin;
-                vec3 projectionEnd = vectorEnd - dot( vectorEnd, norm ) * norm / norm(norm);
+                end = neighbor->vertices[neighbor->vertices[0]->pos == origin];
+                vectorEnd = end - origin;
+                projectionEnd = vectorEnd - dot( vectorEnd, norm ) * norm / norm(norm);
 
-                float dot = dot(projectionStart, projectionEnd);
-                float det = dot( norm, cross( projectionStart, projectionEnd ) );
-                float angle = 180 - abs( atan2( det, dot ) );
+                dot = dot(projectionStart, projectionEnd);
+                det = dot( norm, cross( projectionStart, projectionEnd ) );
+                angle = 180 - abs( atan2( det, dot ) );
 
-                float arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+                arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
                 arg = ( angle <= 45 ) ? arg : wn * arg;
 
                 insertEdge(st, en, arg);
             }
         }
-        for(int j = 0; j < obj.lines[i]->vertices[1]->lines.size(); j++)
+
+        origin = tLine->vertices[1]->pos;
+        start = tLine->vertices[0]->pos;
+        norm = tLine->vertices[1]->normal;
+        vectorStart = start - origin;
+        projectionStart = vectorStart - dot( vectorStart, norm ) * norm / norm(norm);
+
+        for( mod.Line* neighbor : tLine->vertices[1]->lines )
         {
-            if(obj.lines[i]->vertices[1]->lines[j] != obj->lines[i])
+            if( neighbor != tLine )
             {
-                vec3 origin = obj.lines[i]->vertices[1]->pos;
-                vec3 a = obj.lines[i]->vertices[1]->lines[j]->vertices[obj.lines[i]->vertices[1]->lines[j]->vertices[0]->pos == origin];
-                vec3 b = obj.lines[i]->vertices[1]->normal + origin;
+                *en = nodes[ make_pair( neighbor->a, neighbor->b ) ];
 
-                float arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+                end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ];
+                vectorEnd = end - origin;
+                projectionEnd = vectorEnd - dot( vectorEnd, norm ) * norm / norm(norm);
 
-                matrix_graph[i][obj.lines[i]->vertices[1]->lines[j]->index] = exp( -arg * arg);
-                if(angleBetween(a, b, origin) <= 45)
-                {
-                    matrix_graph[i][obj.lines[i]->vertices[1]->lines[j]->index] = exp(0 - pow(angle / sigma2, 2));
-                    matrix_graph[obj.lines[i]->vertices[1]->lines[j]->index][i] = exp(0 - pow(angle / sigma2, 2));
-                }
-                else
-                {
-                    matrix_graph[i][obj.lines[i]->vertices[1]->lines[j]->index] = wn * exp(0 - pow((90 - angle) / sigma2, 2));
-                    matrix_graph[obj.lines[i]->vertices[1]->lines[j]->index][i] = wn * exp(0 - pow((90 - angle) / sigma2, 2));
-                }
+                dot = dot( projectionStart, projectionEnd );
+                det = dot( norm, cross( projectionStart, projectionEnd ) );
+                angle = 180 - abs( atan2( det, dot ) );
+
+                arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+                arg = ( angle <= 45 ) ? arg : wn * arg;
+
+                insertEdge ( st, en, arg );
             }
         }
-        for(int j = 0; j < obj.lines[i]->connections.size(); j++)
-        {
-            matrix_graph[i][obj.lines[i]->vertices[1]->lines[j]->index] =
-        }
+
+    }
+
+    for( Quad tQuad : mod.quads )
+    {
+        start = mod.vertices[ tQuad[i1] ];
+        end = mod.vertices[ tQuad[i2] ];
+        norm =
+        vectorStart = start - end;
+        projectionStart = vectorStart - dot( vectorStart,  )
+
+        start = mod.vertices[ tQuad[i4] ];
+        end = mod.vertices[ tQuad[i3] ];
+        vectorEnd = start - end;
+
+        frontNeighbor
     }
 }
 
