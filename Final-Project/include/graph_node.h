@@ -4,10 +4,10 @@ class node
 public:
     typedef typename G::n N;
     typedef typename G::Edge Edge;
-    vec3 points[2];
+    glm::vec3 points[2];
     int i1, i2;
     unordered_set <Edge*> m_edges;
-    node(int a, int b, vec3 va, vec3 vb)
+    node(int a, int b, glm::vec3 va, glm::vec3 vb)
     {
         i1 = a;
         i2 = b;

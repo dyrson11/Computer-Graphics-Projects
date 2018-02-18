@@ -1,15 +1,8 @@
 #pragma once
+#ifndef UTIL_H_
+#define UTIL_H_
 
-#define M_E         2.71828182845904523536028747135266250
-
-float angleBetween(glm::vec3 a, glm::vec3 b, glm::vec3 origin)
-{
-    glm::vec3 da=glm::normalize(a-origin);
-    glm::vec3 db=glm::normalize(b-origin);
-    return glm::acos(glm::dot(da, db));
-}
-
-const vector<string> explode(const string& s, const char& c)
+inline vector<string> explode(const string& s, const char& c)
 {
 	string buff{""};
 	vector<string> v;
@@ -24,9 +17,9 @@ const vector<string> explode(const string& s, const char& c)
 	return v;
 }
 
+#endif /* UTIL_H_ */
 
-
-void _fooInitGraph()
+/*void _fooInitGraph()
 {
     float matrix_graph[mod.lines.size()][mod.lines.size()];
     float sigma1 = 5, sigma2 = 15, wn = -5;
@@ -116,9 +109,9 @@ void _fooInitGraph()
 
     }
 
-}
+}*/
 
-void initGraph()
+/*void initGraph()
 {
     for(int i = 0; i < obj.lines.size(); i++)
     {
@@ -168,4 +161,4 @@ void initGraph()
             matrix_graph[i][obj.lines[i]->vertices[1]->lines[j]->index] =
         }
     }
-}
+}*/
