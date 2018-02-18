@@ -1,11 +1,10 @@
-#pragma once
 #include "../include/graph.h"
-//#include "../include/utils.h"
+#include "../include/utils.h"
 
 template<typename N, typename E>
 bool graph<N,E>::insertNode(Node* x)
 {
-    nodes.insert(x);
+    //nodes.insert(x);
 }
 
 template<typename N, typename E>
@@ -22,13 +21,13 @@ bool graph<N,E>::insertEdge(Node *a, Node *b, float weight)
 template<typename N, typename E>
 bool graph<N,E>::removeNode(Node *x)
 {
-    typename unordered_set <Edge*>::iterator i;
+    /*typename unordered_set <Edge*>::iterator i;
     for( i = x->m_edges.begin(); i != x->m_edges.end(); i++)
     {
         removeEdge(*i, x == (*i)->m_nodes[0]);
     }
     nodes.erase(nodes.find(x));
-    delete x;
+    delete x;*/
 }
 
 template<typename N, typename E>
@@ -48,91 +47,109 @@ template<typename N, typename E>
 void graph<N,E>::init_graph(model<N,E> mod)
 {
     Node* temp, *en, *st;
-    vec3 origin, start, norm, vectorStart, projectionStart, end, vectorEnd, projectionEnd;
+    glm::vec3 origin, start, norm, vectorStart, projectionStart, end, vectorEnd, projectionEnd;
     float dot, det, angle, arg;
     float sigma1 = 5, sigma2 = 15, sigma3 = 5, wp = 0.05, wn = -5;
 
-    for( mod.Line* tLine : mod.lines.size() )
+    for( auto& tLine : mod.lines )
     {
         temp = new Node( tLine->a, tLine->b, tLine->vertices[0]->pos, tLine->vertices[1]->pos );
         nodes.insert( make_pair( make_pair(tLine->a, tLine->b), temp ) );
     }
 
-    for( mod.Line* tLine : mod.lines.size() )
+    for( auto& tLine : mod.lines )
     {
         st = nodes[make_pair(tLine->a, tLine->b)];
-
 
         origin = tLine->vertices[0]->pos;
         start = tLine->vertices[1]->pos;
         norm = tLine->vertices[0]->normal;
         vectorStart = start - origin;
-        projectionStart = vectorStart - dot( vectorStart, norm ) * norm / norm(norm);
-        for( mod.Line* neighbor : tLine->vertices[0]->lines )
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
+        for( auto& neighbor : tLine->vertices[0]->lines )
         {
-            if( neighbor != tLine )
-            {
-                en = nodes[make_pair(neighbor->a, neighbor->b)];
+            if( neighbor == tLine )
+                continue;
 
-                end = neighbor->vertices[neighbor->vertices[0]->pos == origin];
-                vectorEnd = end - origin;
-                projectionEnd = vectorEnd - dot( vectorEnd, norm ) * norm / norm(norm);
+            en = nodes[make_pair(neighbor->a, neighbor->b)];
 
-                dot = dot(projectionStart, projectionEnd);
-                det = dot( norm, cross( projectionStart, projectionEnd ) );
-                angle = 180 - abs( atan2( det, dot ) );
+            end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ]->pos;
+            vectorEnd = end - origin;
+            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) * norm / glm::normalize(norm);
 
-                arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
-                arg = ( angle <= 45 ) ? arg : wn * arg;
+            dot = glm::dot(projectionStart, projectionEnd);
+            det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
+            angle = abs( atan2( det, dot ) );
+            angle = ( angle <= 90 ) ? 180 - angle : angle;
 
-                insertEdge(st, en, arg);
-            }
+            arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+            arg = exp( -arg * arg);
+            arg = ( angle <= 45 ) ? arg : wn * arg;
+
+            insertEdge(st, en, arg);
         }
 
         origin = tLine->vertices[1]->pos;
         start = tLine->vertices[0]->pos;
         norm = tLine->vertices[1]->normal;
         vectorStart = start - origin;
-        projectionStart = vectorStart - dot( vectorStart, norm ) * norm / norm(norm);
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
 
-        for( mod.Line* neighbor : tLine->vertices[1]->lines )
+        for( auto& neighbor : tLine->vertices[1]->lines )
         {
-            if( neighbor != tLine )
-            {
-                *en = nodes[ make_pair( neighbor->a, neighbor->b ) ];
+            if( neighbor == tLine )
+                continue;
 
-                end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ];
-                vectorEnd = end - origin;
-                projectionEnd = vectorEnd - dot( vectorEnd, norm ) * norm / norm(norm);
+            en = nodes[ make_pair( neighbor->a, neighbor->b ) ];
 
-                dot = dot( projectionStart, projectionEnd );
-                det = dot( norm, cross( projectionStart, projectionEnd ) );
-                angle = 180 - abs( atan2( det, dot ) );
+            end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ]->pos;
+            vectorEnd = end - origin;
+            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) * norm / glm::normalize(norm);
 
-                arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
-                arg = ( angle <= 45 ) ? arg : wn * arg;
+            dot = glm::dot( projectionStart, projectionEnd );
+            det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
+            angle = abs( atan2( det, dot ) );
+            angle = ( angle <= 90 ) ? 180 - angle : angle;
 
-                insertEdge ( st, en, arg );
-            }
+            arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+            arg = exp( -arg * arg);
+            arg = ( angle <= 45 ) ? arg : wn * arg;
+
+            insertEdge ( st, en, arg );
         }
 
     }
 
     for( Quad tQuad : mod.quads )
     {
-        start = mod.vertices[ tQuad[i1] ];
-        end = mod.vertices[ tQuad[i2] ];
-        norm =
+        st = nodes[ make_pair( min( tQuad.i1, tQuad.i2 ), max( tQuad.i1, tQuad.i2 ) ) ];
+        start = mod.vertices[ tQuad.i1 ]->pos;
+        end = mod.vertices[ tQuad.i2 ]->pos;
+        norm = ( mod.vertices[ tQuad.i1 ]->pos +
+                 mod.vertices[ tQuad.i2 ]->pos +
+                 mod.vertices[ tQuad.i3 ]->pos +
+                 mod.vertices[ tQuad.i4 ]->pos ) * 0.25f;
         vectorStart = start - end;
-        projectionStart = vectorStart - dot( vectorStart,  )
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
 
-        start = mod.vertices[ tQuad[i4] ];
-        end = mod.vertices[ tQuad[i3] ];
+        en = nodes[ make_pair( min( tQuad.i3, tQuad.i4 ), max( tQuad.i3, tQuad.i4 ) ) ];
+        start = mod.vertices[ tQuad.i4 ]->pos;
+        end = mod.vertices[ tQuad.i3 ]->pos;
         vectorEnd = start - end;
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
 
-        frontNeighbor
+        dot = glm::dot( projectionStart, projectionEnd );
+        det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
+        angle = abs( atan2( det, dot ) );
+        angle = ( angle <= 90 ) ? 180 - angle : angle;
+
+        arg = angle / sigma3;
+        arg = exp( -arg * arg);
+        arg = wp * arg;
+
+        insertEdge ( st, en, arg );
     }
 }
 
 
-//cGraph<float, float> graph;
+template class graph<float, float>;

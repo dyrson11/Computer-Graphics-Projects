@@ -1,4 +1,3 @@
-#pragma once
 #include "../include/model.h"
 #include "../include/utils.h"
 
@@ -36,16 +35,19 @@ void model<V,L>::load_model(const char * dir)
 			else if(args.size() == 4 && args[0] == "f")
 			{
 				sscanf(ln.c_str(), "%*s %d %d %d", &a, &b, &c);
+                a--;
+                b--;
+                c--;
 				insertLine(a, b, line1);
 				insertLine(b, c, line1);
 				insertLine(c, a, line1);
-				vec3 normal = glm::normalize(glm::cross(
-		        glm::vec3(vertices[b - 1]->pos) - glm::vec3(vertices[a - 1]->pos),
-		        glm::vec3(vertices[c - 1]->pos) - glm::vec3(vertices[a - 1]->pos)));
+				glm::vec3 normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[b]->pos) - glm::vec3(vertices[a]->pos),
+		        glm::vec3(vertices[c]->pos) - glm::vec3(vertices[a]->pos)));
 
-				vertices[a - 1]->normal += normal; vertices[a - 1]->num_faces++;
-				vertices[b - 1]->normal += normal; vertices[b - 1]->num_faces++;
-				vertices[c - 1]->normal += normal; vertices[c - 1]->num_faces++;
+				vertices[a]->normal += normal; vertices[a]->num_faces++;
+				vertices[b]->normal += normal; vertices[b]->num_faces++;
+				vertices[c]->normal += normal; vertices[c]->num_faces++;
 
 
                 tris.push_back( Tri( a, b, c ) );
@@ -53,19 +55,22 @@ void model<V,L>::load_model(const char * dir)
 			else if(args.size() == 5 && args[0] == "f")
 			{
 				sscanf(ln.c_str(), "%*s %d %d %d %d", &a, &b, &c, &d);
-
+                a--;
+                b--;
+                c--;
+                d--;
 				insertLine(a, b, line1);
 				insertLine(b, c, line2);
 				insertLine(c, d, line3);
 				insertLine(d, a, line4);
-				vec3 normal = glm::normalize(glm::cross(
-		        glm::vec3(vertices[b - 1]->pos) - glm::vec3(vertices[a - 1]->pos),
-		        glm::vec3(vertices[c - 1]->pos) - glm::vec3(vertices[b - 1]->pos)));
+				glm::vec3 normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[b]->pos) - glm::vec3(vertices[a]->pos),
+		        glm::vec3(vertices[c]->pos) - glm::vec3(vertices[b]->pos)));
 
-				vertices[a - 1]->normal += normal; vertices[a - 1]->num_faces++;
-				vertices[b - 1]->normal += normal; vertices[b - 1]->num_faces++;
-				vertices[c - 1]->normal += normal; vertices[c - 1]->num_faces++;
-				vertices[d - 1]->normal += normal; vertices[d - 1]->num_faces++;
+				vertices[a]->normal += normal; vertices[a]->num_faces++;
+				vertices[b]->normal += normal; vertices[b]->num_faces++;
+				vertices[c]->normal += normal; vertices[c]->num_faces++;
+				vertices[d]->normal += normal; vertices[d]->num_faces++;
 
 				line1->connections.push_back(line3);
 				line2->connections.push_back(line4);
@@ -102,15 +107,15 @@ bool model<V,L>::insertVertex(Vertex* x)
 template<typename V, typename L>
 void model<V,L>::insertLine(int i, int j, Line *&line1)
 {
-    itLine = insertedLines.find( make_pair( i, j ) );
+    //itLine = insertedLines.find( make_pair( i, j ) );
     if(i > j)
         swap(i, j);
 
-    if( itLine == insertedLines.end() )
+    if( insertedLines.find( make_pair( i, j ) ) == insertedLines.end() )
     {
         line1 = new Line;
-        Vertex *a = vertices[i-1];
-        Vertex *b = vertices[j-1];
+        Vertex *a = vertices[i];
+        Vertex *b = vertices[j];
         line1->a = i;
         line1->b = j;
         line1->vertices[0] = a;
@@ -119,12 +124,12 @@ void model<V,L>::insertLine(int i, int j, Line *&line1)
         b->lines.push_back(line1);
         lines.push_back(line1);
         insertedLines.insert( make_pair( make_pair( i, j ), line1 ) );
-        indices.push_back(i-1);
-        indices.push_back(j-1);
+        indices.push_back(i);
+        indices.push_back(j);
     }
     else
     {
-        line1 = itLine->second;
+        line1 = insertedLines.find( make_pair( i, j ) )->second;
     }
 }
 

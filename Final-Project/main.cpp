@@ -6,8 +6,11 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "include/model.h"
+#include "include/graph.h"
 #include "include/program.h"
 #include "include/variables.h"
+
+using namespace glm;
 
 void reshapefunc(int width,int height)
 {
@@ -34,6 +37,8 @@ void init (void)
     glEnableVertexAttribArray(0);
 
 	cout<<obj.indices.size()<<endl;
+
+	tGraph.init_graph(obj);
 
     /*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vec2) * obj.indices.size(), obj.indices.data(), GL_STATIC_DRAW);

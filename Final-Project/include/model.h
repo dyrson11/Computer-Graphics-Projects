@@ -1,8 +1,8 @@
+#pragma once
 #include <bits/stdc++.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <glm/glm.hpp>
-using namespace glm;
 using namespace std;
 
 #include "model_line.h"
@@ -66,11 +66,11 @@ public:
 
     vector <Vertex*> vertices;
     vector <Line*> lines;
-    vector<vec3> positions;
+    vector<glm::vec3> positions;
     vector <GLuint> indices;
 
-    unordered_map< pair<int, int>, Line* > insertedLines;
-    unordered_map< pair<int, int>, Line* >::iterator itLine;
+    map< pair<int, int>, Line* > insertedLines;
+    //typename unordered_map< pair<int, int>, Line* >::iterator itLine;
 
     vector<Quad> quads;
     vector<Tri> tris;
