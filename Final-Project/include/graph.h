@@ -1,9 +1,9 @@
+#pragma once
 #include <bits/stdc++.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
-using namespace glm;
 using namespace std;
 
 #include "graph_node.h"
@@ -20,7 +20,7 @@ public:
     typedef N n;
     typedef E e;
 
-    unordered_map< pair<int, int>, Node* > nodes;
+    map< pair<int, int>, Node* > nodes;
     unordered_set<Edge*> edges;
 
     void init_graph(model<N,E> mod);
