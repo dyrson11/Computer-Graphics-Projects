@@ -7,6 +7,9 @@ find_package( GLEW REQUIRED )
 find_package( OpenGL REQUIRED )
 find_package( GLUT REQUIRED )
 
+set ( CMAKE_CXX_STANDARD 11 )
+
+
 include_directories( headers/ )
 
 add_executable( test.out
