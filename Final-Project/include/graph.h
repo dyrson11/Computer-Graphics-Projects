@@ -6,6 +6,9 @@
 #include <glm/gtx/norm.hpp>
 using namespace std;
 
+#include "../graph/include/andres/graph/graph.hxx"
+#include "../graph/include/andres/graph/complete-graph.hxx"
+#include "../graph/include/andres/graph/multicut-lifted/greedy-additive.hxx"
 #include "graph_node.h"
 #include "graph_edge.h"
 #include "model.h"
@@ -22,6 +25,11 @@ public:
 
     map< pair<int, int>, Node* > nodes;
     unordered_set<Edge*> edges;
+
+    andres::graph::Graph<> sampleGraph;
+    vector<float> weights;
+
+    andres::graph::CompleteGraph<> lifted_graph;
 
     void init_graph(model<N,E> mod);
 

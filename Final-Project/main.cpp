@@ -10,6 +10,12 @@
 #include "include/program.h"
 #include "include/variables.h"
 
+template<typename N, typename E>
+void readResult(model<N,E> mod)
+{
+
+}
+
 using namespace glm;
 
 void reshapefunc(int width,int height)
@@ -24,7 +30,8 @@ void reshapefunc(int width,int height)
 
 void init (void)
 {
-    obj.load_model("res/models/bathtub/bathtub.obj");
+    obj.load_model("res/models/mug/mug.obj");
+	//obj.load_model("res/models/atangana.obj");
 	cout<<"readed obj\n";
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -38,7 +45,26 @@ void init (void)
 
 	cout<<obj.indices.size()<<endl;
 
-	tGraph.init_graph(obj);
+	tGraph.init_graph( obj );
+	vector<char> edge_labels( tGraph.sampleGraph.numberOfEdges() );
+	andres::graph::multicut::greedyAdditiveEdgeContraction( tGraph.sampleGraph, tGraph.weights, edge_labels );
+
+
+	for( int i = 0; i < edge_labels.size(); i++ )
+	{
+		char label = edge_labels[i];
+		tGraph.Edge* tLine = obj.lines[i];
+
+		if( label == '0' )
+		{
+
+		}
+	}
+
+	/*for( auto label : edge_labels)
+	{
+		cout<<(int)label<<" ";
+	}*/
 
     /*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vec2) * obj.indices.size(), obj.indices.data(), GL_STATIC_DRAW);

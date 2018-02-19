@@ -51,11 +51,16 @@ void graph<N,E>::init_graph(model<N,E> mod)
     float dot, det, angle, arg;
     float sigma1 = 5, sigma2 = 15, sigma3 = 5, wp = 0.05, wn = -5;
 
+    sampleGraph.insertVertices(mod.lines.size());
+    int idx = 0;
     for( auto& tLine : mod.lines )
     {
-        temp = new Node( tLine->a, tLine->b, tLine->vertices[0]->pos, tLine->vertices[1]->pos );
+        temp = new Node( tLine->a, tLine->b, tLine->vertices[0]->pos, tLine->vertices[1]->pos, idx++ );
         nodes.insert( make_pair( make_pair(tLine->a, tLine->b), temp ) );
     }
+
+    //std::vector<double> weights( nodes.size() );
+
 
     for( auto& tLine : mod.lines )
     {
@@ -65,7 +70,7 @@ void graph<N,E>::init_graph(model<N,E> mod)
         start = tLine->vertices[1]->pos;
         norm = tLine->vertices[0]->normal;
         vectorStart = start - origin;
-        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) / glm::length2( norm ) * norm;
         for( auto& neighbor : tLine->vertices[0]->lines )
         {
             if( neighbor == tLine )
@@ -75,25 +80,37 @@ void graph<N,E>::init_graph(model<N,E> mod)
 
             end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ]->pos;
             vectorEnd = end - origin;
-            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) * norm / glm::normalize(norm);
+            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) / glm::length2( norm ) * norm;
 
             dot = glm::dot(projectionStart, projectionEnd);
             det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
-            angle = abs( atan2( det, dot ) );
-            angle = ( angle <= 90 ) ? 180 - angle : angle;
+            angle = abs( atan2( det, dot ) ) * (180.0/3.141592653589793238463);
 
+            angle = ( angle <= 90 ) ? angle : 180 - angle;
             arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
             arg = exp( -arg * arg);
             arg = ( angle <= 45 ) ? arg : wn * arg;
 
             insertEdge(st, en, arg);
+            sampleGraph.insertEdge(st->index, en->index);
+            weights.push_back(arg);
+
+            //cout<<angle<<" ";
+            /*if(arg < 0)
+            {
+                cout<<"neg ";
+            }
+            else
+            {
+                cout<<"pos ";
+            }*/
         }
 
         origin = tLine->vertices[1]->pos;
         start = tLine->vertices[0]->pos;
         norm = tLine->vertices[1]->normal;
         vectorStart = start - origin;
-        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
+        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::dot( norm, norm );
 
         for( auto& neighbor : tLine->vertices[1]->lines )
         {
@@ -104,18 +121,20 @@ void graph<N,E>::init_graph(model<N,E> mod)
 
             end = neighbor->vertices[ neighbor->vertices[0]->pos == origin ]->pos;
             vectorEnd = end - origin;
-            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) * norm / glm::normalize(norm);
+            projectionEnd = vectorEnd - glm::dot( vectorEnd, norm ) * norm / glm::dot( norm, norm );
 
             dot = glm::dot( projectionStart, projectionEnd );
             det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
-            angle = abs( atan2( det, dot ) );
-            angle = ( angle <= 90 ) ? 180 - angle : angle;
+            angle = abs( atan2( det, dot ) ) * (180.0/3.141592653589793238463);
+            angle = ( angle <= 90 ) ? angle : 180 - angle;
 
             arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
             arg = exp( -arg * arg);
             arg = ( angle <= 45 ) ? arg : wn * arg;
 
             insertEdge ( st, en, arg );
+            sampleGraph.insertEdge(st->index, en->index);
+            weights.push_back(arg);
         }
 
     }
@@ -125,29 +144,48 @@ void graph<N,E>::init_graph(model<N,E> mod)
         st = nodes[ make_pair( min( tQuad.i1, tQuad.i2 ), max( tQuad.i1, tQuad.i2 ) ) ];
         start = mod.vertices[ tQuad.i1 ]->pos;
         end = mod.vertices[ tQuad.i2 ]->pos;
-        norm = ( mod.vertices[ tQuad.i1 ]->pos +
-                 mod.vertices[ tQuad.i2 ]->pos +
-                 mod.vertices[ tQuad.i3 ]->pos +
-                 mod.vertices[ tQuad.i4 ]->pos ) * 0.25f;
         vectorStart = start - end;
-        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
 
         en = nodes[ make_pair( min( tQuad.i3, tQuad.i4 ), max( tQuad.i3, tQuad.i4 ) ) ];
         start = mod.vertices[ tQuad.i4 ]->pos;
         end = mod.vertices[ tQuad.i3 ]->pos;
         vectorEnd = start - end;
-        projectionStart = vectorStart - glm::dot( vectorStart, norm ) * norm / glm::normalize(norm);
 
-        dot = glm::dot( projectionStart, projectionEnd );
-        det = glm::dot( norm, glm::cross( projectionStart, projectionEnd ) );
-        angle = abs( atan2( det, dot ) );
-        angle = ( angle <= 90 ) ? 180 - angle : angle;
+        dot = glm::dot( glm::normalize( vectorStart ), glm::normalize( vectorEnd ) );
+        angle = abs( acos( dot ) ) * (180.0/3.141592653589793238463);
+        angle = ( angle <= 90 ) ? angle : 180 - angle;
 
         arg = angle / sigma3;
         arg = exp( -arg * arg);
         arg = wp * arg;
 
         insertEdge ( st, en, arg );
+        sampleGraph.insertEdge(st->index, en->index);
+        weights.push_back(arg);
+
+
+
+        st = nodes[ make_pair( min( tQuad.i2, tQuad.i3 ), max( tQuad.i2, tQuad.i3 ) ) ];
+        start = mod.vertices[ tQuad.i2 ]->pos;
+        end = mod.vertices[ tQuad.i3 ]->pos;
+        vectorStart = start - end;
+
+        en = nodes[ make_pair( min( tQuad.i1, tQuad.i4 ), max( tQuad.i1, tQuad.i4 ) ) ];
+        start = mod.vertices[ tQuad.i1 ]->pos;
+        end = mod.vertices[ tQuad.i4 ]->pos;
+        vectorEnd = start - end;
+
+        dot = glm::dot( glm::normalize( vectorStart ), glm::normalize( vectorEnd ) );
+        angle = abs( acos( dot ) ) * (180.0/3.141592653589793238463);
+        angle = ( angle <= 90 ) ? angle : 180 - angle;
+
+        arg = angle / sigma3;
+        arg = exp( -arg * arg);
+        arg = wp * arg;
+
+        insertEdge ( st, en, arg );
+        sampleGraph.insertEdge(st->index, en->index);
+        weights.push_back(arg);
     }
 }
 

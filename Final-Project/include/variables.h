@@ -3,6 +3,7 @@
 model<float, float> obj;
 graph<float, float> tGraph;
 
+
 program program1;
 GLuint VAO, VBO, IBO;
 int winwidth, winheight;

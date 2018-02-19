@@ -65,11 +65,22 @@ void model<V,L>::load_model(const char * dir)
 				insertLine(d, a, line4);
 				glm::vec3 normal = glm::normalize(glm::cross(
 		        glm::vec3(vertices[b]->pos) - glm::vec3(vertices[a]->pos),
-		        glm::vec3(vertices[c]->pos) - glm::vec3(vertices[b]->pos)));
-
+		        glm::vec3(vertices[d]->pos) - glm::vec3(vertices[a]->pos)));
 				vertices[a]->normal += normal; vertices[a]->num_faces++;
+
+                normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[c]->pos) - glm::vec3(vertices[b]->pos),
+		        glm::vec3(vertices[a]->pos) - glm::vec3(vertices[b]->pos)));
 				vertices[b]->normal += normal; vertices[b]->num_faces++;
+
+                normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[d]->pos) - glm::vec3(vertices[c]->pos),
+		        glm::vec3(vertices[b]->pos) - glm::vec3(vertices[c]->pos)));
 				vertices[c]->normal += normal; vertices[c]->num_faces++;
+
+                normal = glm::normalize(glm::cross(
+		        glm::vec3(vertices[a]->pos) - glm::vec3(vertices[d]->pos),
+		        glm::vec3(vertices[c]->pos) - glm::vec3(vertices[d]->pos)));
 				vertices[d]->normal += normal; vertices[d]->num_faces++;
 
 				line1->connections.push_back(line3);
@@ -90,6 +101,7 @@ void model<V,L>::computeNormals()
 		vertices[i]->normal.x = vertices[i]->normal.x / vertices[i]->num_faces;
 		vertices[i]->normal.y = vertices[i]->normal.y / vertices[i]->num_faces;
 		vertices[i]->normal.z = vertices[i]->normal.z / vertices[i]->num_faces;
+        //cout<<vertices[i]->normal.x<<" "<<vertices[i]->normal.y<<" "<<vertices[i]->normal.z<<"\n";
 	}
     for(int i = 0; i < lines.size(); i++)
 	{
