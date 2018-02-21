@@ -2,11 +2,12 @@
 
 model<float, float> obj;
 graph<float, float> tGraph;
+vector<glm::vec3> colors;
 
 
 program program1;
 GLuint VAO, VBO, IBO;
-int winwidth, winheight;
+int winwidth, winheight, nClusters, nFlowLines;
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);

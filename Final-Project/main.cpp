@@ -9,6 +9,12 @@
 #include "include/graph.h"
 #include "include/program.h"
 #include "include/variables.h"
+#include "include/flowline.h"
+
+#include "andres/graph/complete-graph.hxx"
+#include "andres/graph/multicut/greedy-additive.hxx"
+#include "graph/include/andres/graph/lifting.hxx"
+#include "graph/src/command-line-tools/utils.hxx"
 
 template<typename N, typename E>
 void readResult(model<N,E> mod)
@@ -30,7 +36,10 @@ void reshapefunc(int width,int height)
 
 void init (void)
 {
-    obj.load_model("res/models/mug/mug.obj");
+	freopen("log.c", "w", stderr);
+
+	obj.load_model("res/models/mug/mug.obj");
+    //obj.load_model("res/models/wineglass/wineglass.obj");
 	//obj.load_model("res/models/atangana.obj");
 	cout<<"readed obj\n";
     glGenVertexArrays(1, &VAO);
@@ -42,33 +51,92 @@ void init (void)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
+	tGraph.init_graph( obj );
 
 	cout<<obj.indices.size()<<endl;
-
-	tGraph.init_graph( obj );
-	vector<char> edge_labels( tGraph.sampleGraph.numberOfEdges() );
+	cout<<"Starting Correlation clustering...\n";
+	vector<char> edge_labels( tGraph.sampleGraph.numberOfEdges(), 1 );
 	andres::graph::multicut::greedyAdditiveEdgeContraction( tGraph.sampleGraph, tGraph.weights, edge_labels );
 
+	auto energy_value = inner_product(tGraph.weights.begin(), tGraph.weights.end(), edge_labels.begin(), .0);
 
-	for( int i = 0; i < edge_labels.size(); i++ )
+    std::vector<size_t> vertex_labels( tGraph.sampleGraph.numberOfVertices() );
+    edgeToVertexLabels( tGraph.sampleGraph, edge_labels, vertex_labels );
+
+	cout<<"Done.\n";
+	nClusters = *max_element(vertex_labels.begin(), vertex_labels.end()) + 1;
+	cout << "Number of clusters: " << nClusters << endl;
+
+	for(int i = 0; i < vertex_labels.size(); i++)
 	{
-		char label = edge_labels[i];
-		tGraph.Edge* tLine = obj.lines[i];
-
-		if( label == '0' )
-		{
-
-		}
+		model<float, float>::Line* tLine = obj.lines[i];
+		tLine->clusterID = vertex_labels[i];
 	}
 
-	/*for( auto label : edge_labels)
-	{
-		cout<<(int)label<<" ";
-	}*/
+	colors.push_back( vec3( 0.5, 0.0, 0.0 ) );
+	colors.push_back( vec3( 0.0, 0.5, 0.0 ) );
+	colors.push_back( vec3( 0.0, 0.0, 0.5 ) );
 
-    /*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vec2) * obj.indices.size(), obj.indices.data(), GL_STATIC_DRAW);
-	glBindVertexArray(0);*/
+	vector<FlowLine> initialFlowLines;
+	bool searching = true;
+	for( auto& tLine : obj.lines )
+	{
+		if( tLine->isInFlowline )
+			continue;
+		FlowLine tFlow;
+		tFlow.lines.push_back( tLine->index );
+		tLine->isInFlowline = true;
+		tLine->flowLineID = initialFlowLines.size();
+		auto node = tLine;
+		while(searching)
+		{
+			searching = false;
+			for( auto& neighbor : node->vertices[0]->lines )
+			{
+				if( neighbor->clusterID != tLine->clusterID || neighbor->isInFlowline )
+					continue;
+
+				tFlow.lines.push_back( neighbor->index );
+				neighbor->isInFlowline = true;
+				neighbor->flowLineID = initialFlowLines.size();
+				node = neighbor;
+				searching = true;
+				break;
+			}
+		}
+		searching = true;
+		node = tLine;
+		while(searching)
+		{
+			searching = false;
+			for( auto& neighbor : node->vertices[1]->lines )
+			{
+				if( neighbor->clusterID != tLine->clusterID || neighbor->isInFlowline )
+					continue;
+
+				tFlow.lines.push_back( neighbor->index );
+				neighbor->isInFlowline = true;
+				neighbor->flowLineID = initialFlowLines.size();
+				node = neighbor;
+				searching = true;
+				break;
+			}
+		}
+		initialFlowLines.push_back( tFlow );
+	}
+
+	nFlowLines = initialFlowLines.size();
+	cout << "Number of FlowLines: " << nFlowLines << endl;
+
+	obj.updateModelFlowlines();
+
+	glBindBuffer(GL_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLuint) * obj.ids.size(), obj.ids.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(GLuint), (void*)0);
+    glEnableVertexAttribArray(1);
+
+
+
     program1.loadShaders("res/shaders/vertexShader.glsl", "res/shaders/fragmentShader.glsl");
 	glUseProgram(program1.id);
 }
@@ -82,11 +150,15 @@ void display (void)
 	mat4 projection = perspective(radians(45.0f), (float)winwidth / (float)winheight, 0.1f, 100.0f);
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "projection"), 1, GL_FALSE, &projection[0][0]);
 
+	glLineWidth(3.0);
+	glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, obj.indices.data());
+
 	mat4 model;
 	model = scale(model, vec3(0.25f, 0.25f, 0.25f));
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "model"), 1, GL_FALSE, value_ptr(model));
-    glBindVertexArray(VAO);
-    glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, obj.indices.data());
+
+
+
 	//glDrawElements( GL_LINES, sizeof(vec2) * obj.indices.size(), GL_UNSIGNED_INT, nullptr);
     glutSwapBuffers();
 }
