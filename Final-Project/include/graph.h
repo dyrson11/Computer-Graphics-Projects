@@ -25,6 +25,8 @@ public:
 
     map< pair<int, int>, Node* > nodes;
     unordered_set<Edge*> edges;
+    map< pair<int, int>, float > inserted_edges;
+    vector<Edge*> edge_list;
 
     andres::graph::Graph<> sampleGraph;
     vector<float> weights;

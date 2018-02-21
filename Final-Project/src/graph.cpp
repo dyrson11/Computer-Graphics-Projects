@@ -16,6 +16,8 @@ bool graph<N,E>::insertEdge(Node *a, Node *b, float weight)
     edge1->weight = weight;
     a->m_edges.insert(edge1);
     b->m_edges.insert(edge1);
+    edges.insert(edge1);
+    edge_list.push_back(edge1);
 }
 
 template<typename N, typename E>
@@ -73,7 +75,7 @@ void graph<N,E>::init_graph(model<N,E> mod)
         projectionStart = vectorStart - glm::dot( vectorStart, norm ) / glm::length2( norm ) * norm;
         for( auto& neighbor : tLine->vertices[0]->lines )
         {
-            if( neighbor == tLine )
+            if( neighbor->index == tLine->index )
                 continue;
 
             en = nodes[make_pair(neighbor->a, neighbor->b)];
@@ -91,9 +93,13 @@ void graph<N,E>::init_graph(model<N,E> mod)
             arg = exp( -arg * arg);
             arg = ( angle <= 45 ) ? arg : wn * arg;
 
-            insertEdge(st, en, arg);
-            sampleGraph.insertEdge(st->index, en->index);
-            weights.push_back(arg);
+            if( inserted_edges.find( make_pair( min(st->index, en->index), max( st->index, en->index ) ) ) == inserted_edges.end() )
+            {
+                insertEdge(st, en, arg);
+                sampleGraph.insertEdge( min(st->index, en->index), max( st->index, en->index ) );
+                weights.push_back(arg);
+                inserted_edges.insert( make_pair( make_pair( min(st->index, en->index), max( st->index, en->index ) ), arg ) );
+            }
 
             //cout<<angle<<" ";
             /*if(arg < 0)
@@ -114,7 +120,7 @@ void graph<N,E>::init_graph(model<N,E> mod)
 
         for( auto& neighbor : tLine->vertices[1]->lines )
         {
-            if( neighbor == tLine )
+            if( neighbor->index == tLine->index )
                 continue;
 
             en = nodes[ make_pair( neighbor->a, neighbor->b ) ];
@@ -132,9 +138,13 @@ void graph<N,E>::init_graph(model<N,E> mod)
             arg = exp( -arg * arg);
             arg = ( angle <= 45 ) ? arg : wn * arg;
 
-            insertEdge ( st, en, arg );
-            sampleGraph.insertEdge(st->index, en->index);
-            weights.push_back(arg);
+            if( inserted_edges.find( make_pair( min(st->index, en->index), max( st->index, en->index ) ) ) == inserted_edges.end() )
+            {
+                insertEdge ( st, en, arg );
+                sampleGraph.insertEdge( min(st->index, en->index), max( st->index, en->index ) );
+                weights.push_back(arg);
+                inserted_edges.insert( make_pair( make_pair( min(st->index, en->index), max( st->index, en->index ) ), arg ) );
+            }
         }
 
     }
@@ -159,9 +169,13 @@ void graph<N,E>::init_graph(model<N,E> mod)
         arg = exp( -arg * arg);
         arg = wp * arg;
 
-        insertEdge ( st, en, arg );
-        sampleGraph.insertEdge(st->index, en->index);
-        weights.push_back(arg);
+        if( inserted_edges.find( make_pair( min(st->index, en->index), max( st->index, en->index ) ) ) == inserted_edges.end() )
+        {
+            insertEdge ( st, en, arg );
+            sampleGraph.insertEdge( min(st->index, en->index), max( st->index, en->index ) );
+            weights.push_back(arg);
+            inserted_edges.insert( make_pair( make_pair( min(st->index, en->index), max( st->index, en->index ) ), arg ) );
+        }
 
 
 
@@ -183,9 +197,13 @@ void graph<N,E>::init_graph(model<N,E> mod)
         arg = exp( -arg * arg);
         arg = wp * arg;
 
-        insertEdge ( st, en, arg );
-        sampleGraph.insertEdge(st->index, en->index);
-        weights.push_back(arg);
+        if( inserted_edges.find( make_pair( min(st->index, en->index), max( st->index, en->index ) ) ) == inserted_edges.end() )
+        {
+            insertEdge ( st, en, arg );
+            sampleGraph.insertEdge( min(st->index, en->index), max( st->index, en->index ) );
+            weights.push_back(arg);
+            inserted_edges.insert( make_pair( make_pair( min(st->index, en->index), max( st->index, en->index ) ), arg ) );
+        }
     }
 }
 
