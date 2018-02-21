@@ -68,6 +68,7 @@ public:
     vector <Line*> lines;
     vector<glm::vec3> positions;
     vector <GLuint> indices;
+    vector <GLuint> ids;
 
     map< pair<int, int>, Line* > insertedLines;
     //typename unordered_map< pair<int, int>, Line* >::iterator itLine;
@@ -77,6 +78,9 @@ public:
 
     void clear_model();
     void load_model(const char *);
+    void updateModel();
+    void updateModel( int );
+    void updateModelFlowlines();
     void computeNormals();
 
     bool insertVertex(Vertex*);

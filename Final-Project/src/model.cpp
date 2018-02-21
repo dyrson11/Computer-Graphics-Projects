@@ -145,4 +145,41 @@ void model<V,L>::insertLine(int i, int j, Line *&line1)
     }
 }
 
+template<typename V, typename L>
+void model<V,L>::updateModel()
+{
+    indices.clear();
+    for( Line* tLine : lines )
+    {
+        indices.push_back(tLine->a);
+        indices.push_back(tLine->b);
+    }
+}
+template<typename V, typename L>
+void model<V,L>::updateModel( int cluster )
+{
+    indices.clear();
+    for( Line* tLine : lines )
+    {
+        if( tLine->clusterID != cluster )
+            continue;
+        indices.push_back(tLine->a);
+        indices.push_back(tLine->b);
+    }
+}
+
+template<typename V, typename L>
+void model<V,L>::updateModelFlowlines()
+{
+    indices.clear();
+    ids.clear();
+    for( Line* tLine : lines )
+    {
+        ids.push_back( tLine->flowLineID );
+        ids.push_back( tLine->flowLineID );
+        indices.push_back(tLine->a);
+        indices.push_back(tLine->b);
+    }
+}
+
 template class model<float, float>;
