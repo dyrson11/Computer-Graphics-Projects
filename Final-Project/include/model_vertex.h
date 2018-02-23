@@ -5,10 +5,12 @@ public:
     typedef typename G::v V;
     typedef typename G::Line line;
     glm::vec3 pos;
-    int num_faces;
+    int num_faces, index;
     bool processed;
     glm::vec3 normal;
     vector <line*> lines;
+    vector <int> flowLines;
+    vector <int> crossedFlowLines;
     vertex(V x, V y, V z)
     {
         this->pos = glm::vec3(x, y, z);

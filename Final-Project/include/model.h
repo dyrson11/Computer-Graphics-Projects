@@ -81,6 +81,7 @@ public:
     void updateModel();
     void updateModel( int );
     void updateModelFlowlines();
+    void updateModelFlowlines( int );
     void computeNormals();
 
     bool insertVertex(Vertex*);

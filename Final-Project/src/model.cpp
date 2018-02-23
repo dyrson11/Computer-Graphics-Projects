@@ -112,6 +112,7 @@ void model<V,L>::computeNormals()
 template<typename V, typename L>
 bool model<V,L>::insertVertex(Vertex* x)
 {
+    x->index = vertices.size();
     vertices.push_back(x);
 	positions.push_back(x->pos);
 }
@@ -149,22 +150,34 @@ template<typename V, typename L>
 void model<V,L>::updateModel()
 {
     indices.clear();
+    ids.clear();
+    positions.clear();
     for( Line* tLine : lines )
     {
         indices.push_back(tLine->a);
         indices.push_back(tLine->b);
+        ids.push_back( tLine->clusterID );
+        ids.push_back( tLine->clusterID );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
     }
 }
 template<typename V, typename L>
 void model<V,L>::updateModel( int cluster )
 {
     indices.clear();
+    ids.clear();
+    positions.clear();
     for( Line* tLine : lines )
     {
         if( tLine->clusterID != cluster )
             continue;
         indices.push_back(tLine->a);
         indices.push_back(tLine->b);
+        ids.push_back( tLine->clusterID );
+        ids.push_back( tLine->clusterID );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
     }
 }
 
@@ -173,12 +186,34 @@ void model<V,L>::updateModelFlowlines()
 {
     indices.clear();
     ids.clear();
+    positions.clear();
     for( Line* tLine : lines )
     {
         ids.push_back( tLine->flowLineID );
         ids.push_back( tLine->flowLineID );
         indices.push_back(tLine->a);
         indices.push_back(tLine->b);
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
+    }
+}
+
+template<typename V, typename L>
+void model<V,L>::updateModelFlowlines( int FlowLine )
+{
+    indices.clear();
+    ids.clear();
+    positions.clear();
+    for( Line* tLine : lines )
+    {
+        if( tLine->flowLineID != FlowLine )
+            continue;
+        ids.push_back( FlowLine );
+        ids.push_back( FlowLine );
+        indices.push_back( tLine->a );
+        indices.push_back( tLine->b );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
     }
 }
 

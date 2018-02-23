@@ -1,12 +1,15 @@
 #  define M_PI  3.14159265358979323846
 
+inline size_t key(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
+
 model<float, float> obj;
 graph<float, float> tGraph;
 vector<glm::vec3> colors;
+vector<FlowLine> initialFlowLines;
 
 
 program program1;
-GLuint VAO, VBO, IBO;
+GLuint VAO, VBO, IBO, EBO;
 int winwidth, winheight, nClusters, nFlowLines;
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);

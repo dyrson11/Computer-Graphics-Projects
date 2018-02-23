@@ -31,7 +31,7 @@ public:
     andres::graph::Graph<> sampleGraph;
     vector<float> weights;
 
-    andres::graph::CompleteGraph<> lifted_graph;
+    //andres::graph::CompleteGraph<> lifted_graph;
 
     void init_graph(model<N,E> mod);
 

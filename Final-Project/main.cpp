@@ -8,8 +8,8 @@
 #include "include/model.h"
 #include "include/graph.h"
 #include "include/program.h"
-#include "include/variables.h"
 #include "include/flowline.h"
+#include "include/variables.h"
 
 #include "andres/graph/complete-graph.hxx"
 #include "andres/graph/multicut/greedy-additive.hxx"
@@ -17,8 +17,321 @@
 #include "graph/src/command-line-tools/utils.hxx"
 
 template<typename N, typename E>
-void readResult(model<N,E> mod)
+void checkLine(typename model<N,E>::Line* tLine, FlowLine& tFlow)
 {
+	if( tLine->isInFlowline )
+		return;
+	tFlow.lines.push_back( tLine->index );
+	bool isEndVertex = true;
+	tLine->isInFlowline = true;
+	tLine->flowLineID = initialFlowLines.size();
+	vector<int>::iterator it;
+	for( auto neighbor : tLine->vertices[0]->lines )
+	{
+		if( neighbor->clusterID == tLine->clusterID && neighbor->index != tLine->index )
+			isEndVertex = false;
+		if( neighbor->clusterID != tLine->clusterID || neighbor->index == tLine->index || neighbor->isInFlowline )
+			continue;
+		//auto node = neighbor;
+		tFlow.vertices.push_back( tLine->vertices[0]->index );
+		tLine->vertices[0]->crossedFlowLines.push_back( tLine->flowLineID );
+		checkLine<float, float>(neighbor, tFlow);
+		break;
+	}
+	if( isEndVertex )
+	{
+		tFlow.endVertices.push_back( tLine->vertices[0]->index );
+		//tFlow.vertices.erase( find( tFlow.vertices.begin(), tFlow.vertices.end(), tLine->vertices[0]->index ) );
+		tLine->vertices[0]->flowLines.push_back( tLine->flowLineID );
+		/*tLine->vertices[0]->crossedFlowLines.erase( find( tLine->vertices[0]->crossedFlowLines.begin(),
+														  tLine->vertices[0]->crossedFlowLines.end(),
+														  tLine->flowLineID ) );*/
+	}
+
+	isEndVertex = true;
+
+	for( auto neighbor : tLine->vertices[1]->lines )
+	{
+		if( neighbor->clusterID == tLine->clusterID && neighbor->index != tLine->index )
+			isEndVertex = false;
+		if( neighbor->clusterID != tLine->clusterID || neighbor->index == tLine->index || neighbor->isInFlowline )
+			continue;
+		//auto node = neighbor;
+		tFlow.vertices.push_back( tLine->vertices[1]->index );
+		tLine->vertices[1]->crossedFlowLines.push_back( tLine->flowLineID );
+		checkLine<float, float>(neighbor, tFlow);
+		break;
+	}
+	if( isEndVertex )
+	{
+		tFlow.endVertices.push_back( tLine->vertices[1]->index );
+		//tFlow.vertices.erase( find( tFlow.vertices.begin(), tFlow.vertices.end(), tLine->vertices[1]->index ) );
+		tLine->vertices[1]->flowLines.push_back( tLine->flowLineID );
+		/*tLine->vertices[1]->crossedFlowLines.erase( find( tLine->vertices[1]->crossedFlowLines.begin(),
+														  tLine->vertices[1]->crossedFlowLines.end(),
+														  tLine->flowLineID ) );*/
+	}
+}
+
+template<typename N, typename E>
+void initialFlowLineExtraction(model<N,E> mod)
+{
+	bool searching = true;
+	for( auto& tLine : obj.lines )
+	{
+		FlowLine tFlow;
+		if( tLine->isInFlowline )
+			continue;
+
+		checkLine<float, float>(tLine, tFlow);
+		tFlow.index = initialFlowLines.size();
+		initialFlowLines.push_back( tFlow );
+	}
+
+	nFlowLines = initialFlowLines.size();
+	float l;
+	for( auto& tFlowLine : initialFlowLines )
+	{
+		l = 0;
+		for( int i = 0; i < tFlowLine.lines.size(); i++ )
+		{
+			auto tLine = obj.lines[ tFlowLine.lines[i] ];
+			l += glm::length2( tLine->vertices[0]->pos - tLine->vertices[1]->pos );
+		}
+		tFlowLine.length = l;
+	}
+}
+
+void genReliableStrands( vector<FlowLine> &FlowLines )
+{
+	andres::graph::Graph<> flowLineGraph;
+	vector<float> weights;
+	flowLineGraph.insertVertices( FlowLines.size() );
+	unordered_map< size_t, float > connectedFlowLines;
+	set< int > connectedVertices;
+	float sigma1 = 7.5, sigma2 = 15, wn = -5;
+	for( auto& tFlowLine : FlowLines )
+	{
+		for( int i = 0; i < tFlowLine.endVertices.size(); i++)
+		{
+			auto& endVertex = obj.vertices[ tFlowLine.endVertices[i] ];
+			for( int indexNeighbor : endVertex->flowLines )
+			{
+				auto& neighbor = FlowLines[ indexNeighbor ];
+				if( connectedVertices.find( endVertex->index ) == connectedVertices.end() &&
+					connectedFlowLines.find( key( min( tFlowLine.index, indexNeighbor ), max( tFlowLine.index, indexNeighbor ) ) ) == connectedFlowLines.end() )
+					continue;
+
+
+				if( connectedVertices.find( endVertex->index ) == connectedVertices.end() )
+				{
+					int counter = 0;
+					glm::vec3 avg = glm::vec3( 0.0f, 0.0f, 0.0f ), projectionStart, projectionEnd;
+					float dot, det, angle, arg;
+					auto vert = endVertex;
+					while(counter < 5)
+					{
+						for( auto tLine : vert->lines )
+						{
+							if( tLine->flowLineID != tFlowLine.index )
+								continue;
+							avg += vert->pos - tLine->vertices[ tLine->vertices[0]->index == vert->index ]->pos;
+							vert = tLine->vertices[ tLine->vertices[0]->index == vert->index ];
+							break;
+						}
+						counter++;
+					}
+					avg *= 0.2f;
+					projectionStart = avg - glm::dot( avg, endVertex->normal ) / glm::length2( endVertex->normal ) * endVertex->normal;
+
+					counter = 0;
+					vert = endVertex;
+					avg = glm::vec3( 0.0f, 0.0f, 0.0f );
+					while(counter < 5)
+					{
+						for( auto tLine : vert->lines )
+						{
+							if( tLine->flowLineID != indexNeighbor )
+								continue;
+							avg += vert->pos - tLine->vertices[ tLine->vertices[0]->index == vert->index ]->pos;
+							vert = tLine->vertices[ tLine->vertices[0]->index == vert->index ];
+							break;
+						}
+						counter++;
+					}
+					avg *= 0.2f;
+					projectionEnd = avg - glm::dot( avg, endVertex->normal ) / glm::length2( endVertex->normal ) * endVertex->normal;
+
+					dot = glm::dot(projectionStart, projectionEnd);
+		            det = glm::dot( endVertex->normal, glm::cross( projectionStart, projectionEnd ) );
+		            angle = abs( atan2( det, dot ) ) * (180.0/3.141592653589793238463);
+					angle = ( angle <= 90 ) ? angle : 180 - angle;
+		            arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+		            arg = exp( -arg * arg);
+		            arg = ( angle <= 45 ) ? arg : wn * arg;
+
+					connectedFlowLines[ key( min( tFlowLine.index, indexNeighbor ), max( tFlowLine.index, indexNeighbor ) ) ] += arg;
+					weights[ flowLineGraph.findEdge( min( tFlowLine.index, indexNeighbor ), max( tFlowLine.index, indexNeighbor ) ).second ] += arg;
+				}
+				else
+				{
+					int counter = 0;
+					glm::vec3 avg = glm::vec3( 0.0f, 0.0f, 0.0f ), projectionStart, projectionEnd;
+					float dot, det, angle, arg;
+					auto vert = endVertex;
+					while(counter < 5)
+					{
+						for( auto tLine : vert->lines )
+						{
+							if( tLine->flowLineID != tFlowLine.index )
+								continue;
+							avg += vert->pos - tLine->vertices[ tLine->vertices[0]->index == vert->index ]->pos;
+							vert = tLine->vertices[ tLine->vertices[0]->index == vert->index ];
+							break;
+						}
+						counter++;
+					}
+					avg *= 0.2f;
+					projectionStart = avg - glm::dot( avg, endVertex->normal ) / glm::length2( endVertex->normal ) * endVertex->normal;
+
+					counter = 0;
+					vert = endVertex;
+					avg = glm::vec3( 0.0f, 0.0f, 0.0f );
+					while(counter < 5)
+					{
+						for( auto tLine : vert->lines )
+						{
+							if( tLine->flowLineID != indexNeighbor )
+								continue;
+							avg += vert->pos - tLine->vertices[ tLine->vertices[0]->index == vert->index ]->pos;
+							vert = tLine->vertices[ tLine->vertices[0]->index == vert->index ];
+							break;
+						}
+						counter++;
+					}
+					avg *= 0.2f;
+					projectionEnd = avg - glm::dot( avg, endVertex->normal ) / glm::length2( endVertex->normal ) * endVertex->normal;
+
+					dot = glm::dot(projectionStart, projectionEnd);
+		            det = glm::dot( endVertex->normal, glm::cross( projectionStart, projectionEnd ) );
+		            angle = abs( atan2( det, dot ) ) * (180.0/3.141592653589793238463);
+					angle = ( angle <= 90 ) ? angle : 180 - angle;
+		            arg = ( angle <= 45 ) ? ( angle / sigma1 ) : ( ( 90 - angle ) / sigma2 );
+		            arg = exp( -arg * arg);
+		            arg = ( angle <= 45 ) ? arg : wn * arg;
+
+					flowLineGraph.insertEdge( min( tFlowLine.index, indexNeighbor ), max( tFlowLine.index, indexNeighbor ) );
+	                weights.push_back(arg);
+
+					connectedFlowLines.insert( make_pair( key( min( tFlowLine.index, indexNeighbor ), max( tFlowLine.index, indexNeighbor ) ), arg ) );
+					connectedVertices.insert( endVertex->index );
+				}
+			}
+		}
+	}
+	glm::vec3 start, end, vectorStart, vectorEnd;
+	float sigma3 = 5, l, dot, det, angle, arg;;
+	connectedFlowLines.clear();
+	for( Quad tQuad : obj.quads )
+    {
+		auto tLine1 = obj.insertedLines.find( make_pair( min( tQuad.i1, tQuad.i2 ), max( tQuad.i1, tQuad.i2 ) ) )->second;
+		auto tLine2 = obj.insertedLines.find( make_pair( min( tQuad.i3, tQuad.i4 ), max( tQuad.i3, tQuad.i4 ) ) )->second;
+
+		if( tLine1->flowLineID != tLine2->flowLineID )
+		{
+			start = obj.vertices[ tQuad.i1 ]->pos;
+			end = obj.vertices[ tQuad.i2 ]->pos;
+			vectorStart = start - end;
+
+			start = obj.vertices[ tQuad.i4 ]->pos;
+			end = obj.vertices[ tQuad.i3 ]->pos;
+			vectorEnd = start - end;
+
+			dot = glm::dot( glm::normalize( vectorStart ), glm::normalize( vectorEnd ) );
+			angle = abs( acos( dot ) ) * (180.0/3.141592653589793238463);
+			angle = ( angle <= 90 ) ? angle : 180 - angle;
+
+			arg = angle / sigma3;
+			arg = exp( -arg * arg);
+			l = min( FlowLines[ tLine1->flowLineID ].length, FlowLines[ tLine2->flowLineID ].length );
+			arg = 2 / l * arg;
+
+			if( connectedFlowLines.find( key( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ) ) == connectedFlowLines.end() )
+			{
+				connectedFlowLines.insert( make_pair( key( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ), arg ) );
+				flowLineGraph.insertEdge( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) );
+				weights.push_back(arg);
+			}
+			else
+				weights[ flowLineGraph.findEdge( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ).second ] += arg;
+		}
+
+		tLine1 = obj.insertedLines.find( make_pair( min( tQuad.i2, tQuad.i3 ), max( tQuad.i2, tQuad.i3 ) ) )->second;
+		tLine2 = obj.insertedLines.find( make_pair( min( tQuad.i1, tQuad.i4 ), max( tQuad.i1, tQuad.i4 ) ) )->second;
+
+		if( tLine1->flowLineID != tLine2->flowLineID )
+		{
+			start = obj.vertices[ tQuad.i2 ]->pos;
+			end = obj.vertices[ tQuad.i3 ]->pos;
+			vectorStart = start - end;
+
+			start = obj.vertices[ tQuad.i1 ]->pos;
+			end = obj.vertices[ tQuad.i4 ]->pos;
+			vectorEnd = start - end;
+
+			dot = glm::dot( glm::normalize( vectorStart ), glm::normalize( vectorEnd ) );
+			angle = abs( acos( dot ) ) * (180.0/3.141592653589793238463);
+			angle = ( angle <= 90 ) ? angle : 180 - angle;
+
+			arg = angle / sigma3;
+			arg = exp( -arg * arg);
+			l = min( FlowLines[ tLine1->flowLineID ].length, FlowLines[ tLine2->flowLineID ].length );
+			arg = 2 / l * arg;
+
+			if( connectedFlowLines.find( key( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ) ) == connectedFlowLines.end() )
+			{
+				connectedFlowLines.insert( make_pair( key( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ), arg ) );
+				flowLineGraph.insertEdge( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) );
+				weights.push_back(arg);
+			}
+			else
+				weights[ flowLineGraph.findEdge( min( tLine1->flowLineID, tLine2->flowLineID ), max( tLine1->flowLineID, tLine2->flowLineID ) ).second ] += arg;
+		}
+    }
+
+	connectedFlowLines.clear();
+	int fl1, fl2;
+	for( auto& tVertex : obj.vertices )
+	{
+		for( int i = 0; i < tVertex->crossedFlowLines.size(); i++ )
+		{
+			fl1 = tVertex->crossedFlowLines[i];
+			for( int j = i + 1; j < tVertex->crossedFlowLines.size(); j++ )
+			{
+				fl2 = tVertex->crossedFlowLines[j];
+				if( connectedFlowLines.find( key( min( fl1, fl2 ), max( fl1, fl2 ) ) ) != connectedFlowLines.end() )
+					continue;
+
+				flowLineGraph.insertEdge( min( fl1, fl2 ), max( fl1, fl2 ) );
+				connectedFlowLines.insert( make_pair( key( min( fl1, fl2 ), max( fl1, fl2 ) ), -25 ) );
+				weights.push_back( -25 );
+			}
+		}
+	}
+
+	cout<<"\n\nPhase 2\n=======\n";
+	cout<<"Correlation clustering of flowlines...\n";
+	vector<char> edge_labels( flowLineGraph.numberOfEdges(), 1 );
+	andres::graph::multicut::greedyAdditiveEdgeContraction( flowLineGraph, weights, edge_labels );
+
+	auto energy_value = inner_product( weights.begin(), weights.end(), edge_labels.begin(), .0);
+
+    std::vector<size_t> vertex_labels( flowLineGraph.numberOfVertices() );
+    edgeToVertexLabels( flowLineGraph, edge_labels, vertex_labels );
+
+	cout<<"Done.\n";
+	nClusters = *max_element(vertex_labels.begin(), vertex_labels.end()) + 1;
+	cout << "Number of clusters of flowlines: " << nClusters << endl;
 
 }
 
@@ -38,21 +351,18 @@ void init (void)
 {
 	freopen("log.c", "w", stderr);
 
-	obj.load_model("res/models/mug/mug.obj");
-    //obj.load_model("res/models/wineglass/wineglass.obj");
+	//obj.load_model("res/models/spherecylinder/spherecylinder.obj");
+	//obj.load_model("res/models/boat-qm/boat-qm.obj");
+	//obj.load_model("res/models/mug/mug.obj");
+    obj.load_model("res/models/wineglass/wineglass.obj");
 	//obj.load_model("res/models/atangana.obj");
 	cout<<"readed obj\n";
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 	glGenBuffers(1, &IBO);
-    glBindVertexArray(VAO);
+	glGenBuffers(1, &EBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
-    glEnableVertexAttribArray(0);
 	tGraph.init_graph( obj );
-
 	cout<<obj.indices.size()<<endl;
 	cout<<"Starting Correlation clustering...\n";
 	vector<char> edge_labels( tGraph.sampleGraph.numberOfEdges(), 1 );
@@ -77,68 +387,35 @@ void init (void)
 	colors.push_back( vec3( 0.0, 0.5, 0.0 ) );
 	colors.push_back( vec3( 0.0, 0.0, 0.5 ) );
 
-	vector<FlowLine> initialFlowLines;
-	bool searching = true;
-	for( auto& tLine : obj.lines )
-	{
-		if( tLine->isInFlowline )
-			continue;
-		FlowLine tFlow;
-		tFlow.lines.push_back( tLine->index );
-		tLine->isInFlowline = true;
-		tLine->flowLineID = initialFlowLines.size();
-		auto node = tLine;
-		while(searching)
-		{
-			searching = false;
-			for( auto& neighbor : node->vertices[0]->lines )
-			{
-				if( neighbor->clusterID != tLine->clusterID || neighbor->isInFlowline )
-					continue;
+	initialFlowLineExtraction(obj);
 
-				tFlow.lines.push_back( neighbor->index );
-				neighbor->isInFlowline = true;
-				neighbor->flowLineID = initialFlowLines.size();
-				node = neighbor;
-				searching = true;
-				break;
-			}
-		}
-		searching = true;
-		node = tLine;
-		while(searching)
-		{
-			searching = false;
-			for( auto& neighbor : node->vertices[1]->lines )
-			{
-				if( neighbor->clusterID != tLine->clusterID || neighbor->isInFlowline )
-					continue;
-
-				tFlow.lines.push_back( neighbor->index );
-				neighbor->isInFlowline = true;
-				neighbor->flowLineID = initialFlowLines.size();
-				node = neighbor;
-				searching = true;
-				break;
-			}
-		}
-		initialFlowLines.push_back( tFlow );
-	}
-
-	nFlowLines = initialFlowLines.size();
 	cout << "Number of FlowLines: " << nFlowLines << endl;
 
-	obj.updateModelFlowlines();
+	genReliableStrands( initialFlowLines );
+
+	//obj.updateModelFlowlines(  );
+	obj.updateModelFlowlines(  );
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLuint) * obj.ids.size(), obj.ids.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(GLuint), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLuint) * obj.ids.size(), obj.ids.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, 0);
     glEnableVertexAttribArray(1);
 
-
+	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * obj.indices.size(), obj.indices.data(), GL_STATIC_DRAW);*/
 
     program1.loadShaders("res/shaders/vertexShader.glsl", "res/shaders/fragmentShader.glsl");
 	glUseProgram(program1.id);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void display (void)
@@ -150,13 +427,14 @@ void display (void)
 	mat4 projection = perspective(radians(45.0f), (float)winwidth / (float)winheight, 0.1f, 100.0f);
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "projection"), 1, GL_FALSE, &projection[0][0]);
 
-	glLineWidth(3.0);
-	glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, obj.indices.data());
-
 	mat4 model;
 	model = scale(model, vec3(0.25f, 0.25f, 0.25f));
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "model"), 1, GL_FALSE, value_ptr(model));
 
+	glBindVertexArray(VAO);
+	glLineWidth(3.0);
+	glDrawArrays( GL_LINES, 0, obj.positions.size());
+	//glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, nullptr);
 
 
 	//glDrawElements( GL_LINES, sizeof(vec2) * obj.indices.size(), GL_UNSIGNED_INT, nullptr);

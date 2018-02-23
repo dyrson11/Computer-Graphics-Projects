@@ -1,4 +1,5 @@
 #version 450 core
+uniform vec3 inColor;
 in vec3 vColor;
 out vec4 color;
 
