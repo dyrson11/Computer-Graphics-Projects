@@ -78,6 +78,7 @@ public:
 
     void clear_model();
     void load_model(const char *);
+    void updateModelInitial();
     void updateModel();
     void updateModel( int );
     void updateModelFlowlines();

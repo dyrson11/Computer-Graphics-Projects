@@ -147,6 +147,23 @@ void model<V,L>::insertLine(int i, int j, Line *&line1)
 }
 
 template<typename V, typename L>
+void model<V,L>::updateModelInitial()
+{
+    indices.clear();
+    ids.clear();
+    positions.clear();
+    for( Line* tLine : lines )
+    {
+        indices.push_back(tLine->a);
+        indices.push_back(tLine->b);
+        ids.push_back( 500000 );
+        ids.push_back( 500000 );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
+    }
+}
+
+template<typename V, typename L>
 void model<V,L>::updateModel()
 {
     indices.clear();
