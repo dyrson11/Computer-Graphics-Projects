@@ -18,6 +18,11 @@ void main(void)
 {
     int res;
     gl_Position = projection * view * model * vec4( position, 1.0 );
+    if( id == uint(500000) )
+    {
+        vColor = vec3( 1.0, 1.0, 1.0 );
+        return;
+    }
     res = int( mod( float(id), 3.0 ) );
     vColor = colors[ int(id) % 6 ];
 }

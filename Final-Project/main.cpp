@@ -394,12 +394,12 @@ void init (void)
 	genReliableStrands( initialFlowLines );
 
 	//obj.updateModelFlowlines(  );
-	obj.updateModelFlowlines(  );
+	obj.updateModelInitial(  );
 
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -418,6 +418,21 @@ void init (void)
 	glBindVertexArray(0);
 }
 
+void setDraw()
+{
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positions.size(), obj.positions.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLuint) * obj.ids.size(), obj.ids.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, 0);
+    glEnableVertexAttribArray(1);
+}
+
 void display (void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -431,7 +446,7 @@ void display (void)
 	model = scale(model, vec3(0.25f, 0.25f, 0.25f));
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "model"), 1, GL_FALSE, value_ptr(model));
 
-	glBindVertexArray(VAO);
+	setDraw();
 	glLineWidth(3.0);
 	glDrawArrays( GL_LINES, 0, obj.positions.size());
 	//glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, nullptr);
@@ -504,6 +519,21 @@ void keyboardfunc(unsigned char key,int x,int y)
 			cameraPos.z = cameraPos.z + 0.02 * normalize(cross(cameraFront, cameraUp)).z;
             //cameraPos += normalize(cross(cameraFront, cameraUp)) * 0.2;
             break;
+		case '1':
+			obj.updateModelInitial();
+			break;
+		case '2':
+			obj.updateModelClusters();
+			break;
+		case '3':
+			obj.updateModelClusters( 0 );
+			break;
+		case '4':
+			obj.updateModelFlowlines();
+			break;
+		case '5':
+			obj.updateModelFlowlines( 0 );
+			break;
     }
     //std::cout<<cameraPos<<std::endl;
     //std::cout<<0.05 * cameraFront<<std::endl;
