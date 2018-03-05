@@ -164,7 +164,7 @@ void model<V,L>::updateModelInitial()
 }
 
 template<typename V, typename L>
-void model<V,L>::updateModel()
+void model<V,L>::updateModelClusters()
 {
     indices.clear();
     ids.clear();
@@ -180,7 +180,7 @@ void model<V,L>::updateModel()
     }
 }
 template<typename V, typename L>
-void model<V,L>::updateModel( int cluster )
+void model<V,L>::updateModelClusters( int cluster )
 {
     indices.clear();
     ids.clear();
