@@ -353,8 +353,8 @@ void init (void)
 
 	//obj.load_model("res/models/spherecylinder/spherecylinder.obj");
 	//obj.load_model("res/models/boat-qm/boat-qm.obj");
-	//obj.load_model("res/models/mug/mug.obj");
-    obj.load_model("res/models/wineglass/wineglass.obj");
+	obj.load_model("res/models/mug/mug.obj");
+    //obj.load_model("res/models/wineglass/wineglass.obj");
 	//obj.load_model("res/models/atangana.obj");
 	cout<<"readed obj\n";
     glGenVertexArrays(1, &VAO);
@@ -392,6 +392,7 @@ void init (void)
 	cout << "Number of FlowLines: " << nFlowLines << endl;
 
 	genReliableStrands( initialFlowLines );
+	glLineWidth(3.0);
 
 	//obj.updateModelFlowlines(  );
 	obj.updateModelInitial(  );
@@ -447,7 +448,7 @@ void display (void)
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "model"), 1, GL_FALSE, value_ptr(model));
 
 	setDraw();
-	glLineWidth(3.0);
+
 	glDrawArrays( GL_LINES, 0, obj.positions.size());
 	//glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, nullptr);
 
@@ -533,6 +534,12 @@ void keyboardfunc(unsigned char key,int x,int y)
 			break;
 		case '5':
 			obj.updateModelFlowlines( 0 );
+			break;
+		case 'o': case 'O':
+			glLineWidth(0.1);
+			break;
+		case 'p': case 'P':
+			glLineWidth(3);
 			break;
     }
     //std::cout<<cameraPos<<std::endl;
