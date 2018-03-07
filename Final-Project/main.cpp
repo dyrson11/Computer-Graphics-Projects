@@ -333,6 +333,12 @@ void genReliableStrands( vector<FlowLine> &FlowLines )
 	nClusters = *max_element(vertex_labels.begin(), vertex_labels.end()) + 1;
 	cout << "Number of clusters of flowlines: " << nClusters << endl;
 
+	for(int i = 0; i < vertex_labels.size(); i++)
+	{
+		model<float, float>::Line* tLine = obj.lines[i];
+		tLine->strandID = vertex_labels[i];
+	}
+
 }
 
 using namespace glm;
@@ -344,13 +350,26 @@ void reshapefunc(int width,int height)
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
+	glClearColor( 1.0, 1.0, 1.0, 1.0);
     glViewport(0,0,width,height);
 }
 
 void init (void)
 {
 	freopen("log.c", "w", stderr);
-
+	//obj.load_model("res/models/bathtub/bathtub.obj");
+	//obj.load_model("res/models/beetle/beetle.obj");
+	//obj.load_model("res/models/big buck bunny/bigbuckbunny.obj");
+	//obj.load_model("res/models/boat-artmesh/boat-artmesh.obj");
+	//obj.load_model("res/models/bottle/bottle.obj");
+	//obj.load_model("res/models/mouse/mouse.obj");
+	//obj.load_model("res/models/phone/phone.obj");
+	//obj.load_model("res/models/rowboat/rowboat.obj");
+	//obj.load_model("res/models/spring/spring.obj");
+	//obj.load_model("res/models/toilet/toilet.obj");
+	//obj.load_model("res/models/wineglass/wineglass.obj");
+	//obj.load_model("res/models/toy/toy.obj");
+	//obj.load_model("res/models/trebol/trebol.obj");
 	//obj.load_model("res/models/spherecylinder/spherecylinder.obj");
 	//obj.load_model("res/models/boat-qm/boat-qm.obj");
 	obj.load_model("res/models/mug/mug.obj");
@@ -392,7 +411,7 @@ void init (void)
 	cout << "Number of FlowLines: " << nFlowLines << endl;
 
 	genReliableStrands( initialFlowLines );
-	glLineWidth(3.0);
+	glLineWidth(4.0);
 
 	//obj.updateModelFlowlines(  );
 	obj.updateModelInitial(  );
@@ -417,6 +436,45 @@ void init (void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+
+	glGenVertexArrays(1, &VAO2);
+    glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &NBO2);
+
+	glBindVertexArray(VAO2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positionsTri.size(), obj.positionsTri.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, NBO2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.normalsTri.size(), obj.normalsTri.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+
+	glGenVertexArrays(1, &VAO3);
+    glGenBuffers(1, &VBO3);
+	glGenBuffers(1, &NBO3);
+
+	glBindVertexArray(VAO3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.positionsQuad.size(), obj.positionsQuad.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, NBO3);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * obj.normalsQuad.size(), obj.normalsQuad.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	program2.loadShaders("res/shaders/vertexShaderModel.glsl", "res/shaders/fragmentShaderModel.glsl");
 }
 
 void setDraw()
@@ -436,24 +494,35 @@ void setDraw()
 
 void display (void)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(program1.id);
-	view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-	glUniformMatrix4fv(glGetUniformLocation(program1.id, "view"), 1, GL_FALSE, &view[0][0]);
-	mat4 projection = perspective(radians(45.0f), (float)winwidth / (float)winheight, 0.1f, 100.0f);
-	glUniformMatrix4fv(glGetUniformLocation(program1.id, "projection"), 1, GL_FALSE, &projection[0][0]);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(program2.id);
 
+	view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	mat4 projection = perspective(radians(45.0f), (float)winwidth / (float)winheight, 0.1f, 100.0f);
 	mat4 model;
 	model = scale(model, vec3(0.25f, 0.25f, 0.25f));
+
+	if(showModel)
+	{
+		glUniform3fv(glGetUniformLocation(program2.id, "viewPos"), sizeof(vec3), &cameraPos[0]);
+		glUniformMatrix4fv(glGetUniformLocation(program2.id, "projection"), 1, GL_FALSE, &projection[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(program2.id, "view"), 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(program2.id, "model"), 1, GL_FALSE, value_ptr(model));
+		glBindVertexArray(VAO2);
+		glDrawArrays( GL_TRIANGLES, 0, obj.positionsTri.size());
+		glBindVertexArray(VAO3);
+		glDrawArrays( GL_QUADS, 0, obj.normalsQuad.size());
+	}
+
+
+	glUseProgram(program1.id);
+	//model = scale(model, vec3(1.0005f, 1.0005f, 1.0005f));
+	glUniformMatrix4fv(glGetUniformLocation(program1.id, "view"), 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(program1.id, "projection"), 1, GL_FALSE, &projection[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(program1.id, "model"), 1, GL_FALSE, value_ptr(model));
 
 	setDraw();
-
 	glDrawArrays( GL_LINES, 0, obj.positions.size());
-	//glDrawElements( GL_LINES, obj.indices.size(), GL_UNSIGNED_INT, nullptr);
-
-
-	//glDrawElements( GL_LINES, sizeof(vec2) * obj.indices.size(), GL_UNSIGNED_INT, nullptr);
     glutSwapBuffers();
 }
 
@@ -491,7 +560,7 @@ void motionfunc(int x,int y)
     front.z = sin(radians(yaw1)) * cos(radians(pitch1));
     cameraFront = normalize(front);
 }
-
+int cl = 0;
 void keyboardfunc(unsigned char key,int x,int y)
 {
 	if (key=='q' || key==27) exit(0);
@@ -535,11 +604,31 @@ void keyboardfunc(unsigned char key,int x,int y)
 		case '5':
 			obj.updateModelFlowlines( 0 );
 			break;
+		case '6':
+			obj.updateModelStrands();
+			break;
+		case '7':
+			obj.updateModelReliableFlowlines();
+			break;
 		case 'o': case 'O':
 			glLineWidth(0.1);
 			break;
 		case 'p': case 'P':
 			glLineWidth(3);
+			break;
+		case 'm':
+			obj.updateModelClusters( cl++ );
+			break;
+		case 'n':
+			if (cl == 0)
+			{
+				obj.updateModelClusters( 0 );
+				break;
+			}
+			obj.updateModelClusters( cl-- );
+			break;
+		case 'j':
+			showModel = !showModel;
 			break;
     }
     //std::cout<<cameraPos<<std::endl;

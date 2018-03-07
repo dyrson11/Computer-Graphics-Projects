@@ -7,12 +7,12 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-const vec3 colors[6] =  vec3[]( vec3( 0.5, 0.0, 0.0 ),
-                                vec3( 0.5, 0.5, 0.0 ),
-                                vec3( 0.0, 0.5, 0.0 ),
-                                vec3( 0.0, 0.5, 0.5 ),
-                                vec3( 0.0, 0.0, 0.5 ),
-                                vec3( 0.5, 0.0, 0.5 ) );
+const vec3 colors[6] =  vec3[]( vec3( 0.8, 0.0, 0.0 ),
+                                vec3( 0.8, 0.8, 0.0 ),
+                                vec3( 0.0, 0.8, 0.0 ),
+                                vec3( 0.0, 0.8, 0.8 ),
+                                vec3( 0.0, 0.0, 0.8 ),
+                                vec3( 0.8, 0.0, 0.8 ) );
 
 void main(void)
 {
@@ -20,7 +20,7 @@ void main(void)
     gl_Position = projection * view * model * vec4( position, 1.0 );
     if( id == uint(500000) )
     {
-        vColor = vec3( 1.0, 1.0, 1.0 );
+        vColor = vec3( 0.0, 0.0, 0.0 );
         return;
     }
     res = int( mod( float(id), 3.0 ) );

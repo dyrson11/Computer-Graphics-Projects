@@ -91,6 +91,36 @@ void model<V,L>::load_model(const char * dir)
 		}
 	}
 	computeNormals();
+    initModelShading();
+}
+
+template<typename V, typename L>
+void model<V,L>::initModelShading()
+{
+    positionsQuad.clear();
+    positionsTri.clear();
+    normalsQuad.clear();
+    normalsTri.clear();
+    for( auto& tTri : tris )
+    {
+        positionsTri.push_back( vertices[tTri.i1]->pos );
+        normalsTri.push_back( vertices[tTri.i1]->normal );
+        positionsTri.push_back( vertices[tTri.i2]->pos );
+        normalsTri.push_back( vertices[tTri.i2]->normal );
+        positionsTri.push_back( vertices[tTri.i3]->pos );
+        normalsTri.push_back( vertices[tTri.i3]->normal );
+    }
+    for( auto& tQuad : quads )
+    {
+        positionsQuad.push_back( vertices[tQuad.i1]->pos );
+        normalsQuad.push_back( vertices[tQuad.i1]->normal );
+        positionsQuad.push_back( vertices[tQuad.i2]->pos );
+        normalsQuad.push_back( vertices[tQuad.i2]->normal );
+        positionsQuad.push_back( vertices[tQuad.i3]->pos );
+        normalsQuad.push_back( vertices[tQuad.i3]->normal );
+        positionsQuad.push_back( vertices[tQuad.i4]->pos );
+        normalsQuad.push_back( vertices[tQuad.i4]->normal );
+    }
 }
 
 template<typename V, typename L>
@@ -229,6 +259,40 @@ void model<V,L>::updateModelFlowlines( int FlowLine )
         ids.push_back( FlowLine );
         indices.push_back( tLine->a );
         indices.push_back( tLine->b );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
+    }
+}
+
+template<typename V, typename L>
+void model<V,L>::updateModelStrands()
+{
+    indices.clear();
+    ids.clear();
+    positions.clear();
+    for( Line* tLine : lines )
+    {
+        ids.push_back( tLine->clusterID + 2 );
+        ids.push_back( tLine->clusterID + 2 );
+        indices.push_back( tLine->a );
+        indices.push_back( tLine->b );
+        positions.push_back( tLine->vertices[0]->pos );
+        positions.push_back( tLine->vertices[1]->pos );
+    }
+}
+
+template<typename V, typename L>
+void model<V,L>::updateModelReliableFlowlines()
+{
+    indices.clear();
+    ids.clear();
+    positions.clear();
+    for( Line* tLine : lines )
+    {
+        ids.push_back( tLine->flowLineID + 2 );
+        ids.push_back( tLine->flowLineID + 2 );
+        indices.push_back(tLine->a);
+        indices.push_back(tLine->b);
         positions.push_back( tLine->vertices[0]->pos );
         positions.push_back( tLine->vertices[1]->pos );
     }

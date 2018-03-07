@@ -6,7 +6,7 @@ public:
     vertex* vertices[2];
     int a, b;
     vector<line*> connections;
-    int index, clusterID, flowLineID;
+    int index, clusterID, flowLineID, strandID;
     bool isInFlowline;
     line()
     {

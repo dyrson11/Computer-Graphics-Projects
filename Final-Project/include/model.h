@@ -70,6 +70,11 @@ public:
     vector <GLuint> indices;
     vector <GLuint> ids;
 
+    vector<glm::vec3> positionsQuad;
+    vector<glm::vec3> positionsTri;
+    vector<glm::vec3> normalsQuad;
+    vector<glm::vec3> normalsTri;
+
     map< pair<int, int>, Line* > insertedLines;
     //typename unordered_map< pair<int, int>, Line* >::iterator itLine;
 
@@ -78,11 +83,14 @@ public:
 
     void clear_model();
     void load_model(const char *);
+    void initModelShading();
     void updateModelInitial();
     void updateModelClusters();
     void updateModelClusters( int );
     void updateModelFlowlines();
     void updateModelFlowlines( int );
+    void updateModelStrands();
+    void updateModelReliableFlowlines();
     void computeNormals();
 
     bool insertVertex(Vertex*);
